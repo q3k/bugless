@@ -1,0 +1,36 @@
+syntax = "proto3";
+package bugless.svc;
+option go_package = "github.com/q3k/bugless/proto/svc";
+
+import "common/common.proto";
+
+service Model {
+    rpc GetIssue(ModelGetIssueRequest) returns (stream common.Issue);
+}
+
+message ModelGetIssueRequest {
+    // ReturnType selects what fields will be present on the returned issue.
+    enum ReturnType {
+        RETURNTYPE_INVALID = 0;
+        // Return both updates and denormalized data.
+        RETURNTYPE_SUMMARY = 1;
+        // Return only denormalized data.
+        RETURNTYPE_FULL = 2;
+    };
+    ReturnType return_type = 1;
+
+
+    // ById queries return a either one issue or an error.
+    message ById {
+        int64 id = 1;
+    };
+    // BySearch queries return zero or more issues, or an error.
+    message BySearch {
+        string search = 1;
+    };
+
+    oneof query {
+        ById by_id = 2;
+        BySearch by_search = 3;
+    };
+}

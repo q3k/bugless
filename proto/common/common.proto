@@ -1,0 +1,46 @@
+syntax = "proto3";
+package bugless.common;
+option go_package = "github.com/q3k/bugless/proto/common";
+
+message Timestamp {
+    // Nanoseconds since UNIX epoch.
+    int64 nanos = 1;
+}
+
+message User {
+    // Unqiue, opaque user identifier.
+    string id = 1;
+}
+
+message Issue {
+    // Globally unique ID.
+    int64 id = 1;
+
+    // Fields set on creation.
+    string summary = 2;
+    Timestamp created = 3;
+    User creator = 4;
+
+    // Updates that have been sent to this issue (might not be populated, depending on request).
+    repeated Update updates = 5;
+
+    // Denormalized fields from updates (might not be populated, depending on request).
+    User current_assignee = 6;
+}
+
+message Comment {
+    string sumamry = 1;
+}
+
+message Assignment {
+    User assignee = 1;
+}
+
+message Update {
+    Timestamp created = 1;
+    oneof kind {
+        Comment comment = 2;
+        Assignment assignment = 3;
+    };
+}
+
