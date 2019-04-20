@@ -8,13 +8,12 @@ Requirements
 
  - first class API support for end-users
  - pluggable model/storage backends
+ - easily deployable in HA mode on k8s
  - ...
 
 
 Diagram
 -------
-
-(spongedown-compatible)
 
     .-------------.              .-------------------.
     | WebFrontend |       gRPC   | Model             |
@@ -45,6 +44,8 @@ WebFrontend considerations
 
 The WebFrontend will have to join issues with user data from the authenticator. User data should either be cached in the frontend, or the authenticator should have its owns latency guarantees for accessing user information on every request (thus keeping a cache itself). I (q3k) think the second options is preferrable.
 
+The WebFrontend should be stateless and horizontally scalable. Thus, special considerations must be made for HTTP request routing to always hit the appropriate WebFrontend if there are any incompatible HTML/JS changes being rolled out. Additionally, WebFrontends should have the ability to steer customers to another instance or version of the WebFrontend (for when an old deployment is being drained and turned down). We are targetting whatever the k8s Ingress model supports (preferably not being dependent on GCP or Nginx ingress extensions).
+
 Model implementations
 ---------------------
 
@@ -63,3 +64,34 @@ The gRPC Authenticator API should let at least two classes of flows be executed:
  - plaintext username/password query passed through the frontend to the authenticator
  - OAuth browser flow
 
+
+Multi-region HA
+---------------
+
+An issue tracker is a core service of an organization. Thus, it needs to be runnable in a HA setup, preferably across regions with high latency links.
+
+We consider the following high-level diagram:
+
+
+
+       Region A         Region B         Region C    
+    .-------------.  .-------------.  .-------------.
+    |             |  |             |  |             |
+     .----. .----.    .----. .----.    .----. .----. 
+     | FE | | FE |    | FE | | FE |    | FE | | FE | 
+     '----' '----'    '----' '----'    '----' '----' 
+       ||     ||        ||     ||        ||     ||
+       v|     v|        v|     v|        v|     v|
+     .---------------------------------------------.
+     |                    Model                    |
+     '---------------------------------------------'
+        |      |         |      |         |      |
+        v      v         v      v         v      v
+     .---------------------------------------------.
+     |                Authenticator                |
+     '---------------------------------------------'
+
+
+Thus, we defer most of the cross-region logic to the Model and Authenticator :)
+
+The rationale for this is that the two components are respectively best suited to implement their own HA and replication logic. For instance, the CockroachDB Model can generally leverage the database's multi-zone support, and an LDAP-based Authenticator will rely on an LDAP master and LDAP read replicas.
