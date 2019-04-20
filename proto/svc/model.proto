@@ -5,7 +5,7 @@ option go_package = "github.com/q3k/bugless/proto/svc";
 import "common/common.proto";
 
 service Model {
-    rpc GetIssue(ModelGetIssueRequest) returns (stream common.Issue);
+    rpc GetIssues(ModelGetIssueRequest) returns (stream common.Issue);
 }
 
 message ModelGetIssueRequest {
