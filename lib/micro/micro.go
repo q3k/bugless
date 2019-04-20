@@ -22,13 +22,14 @@ var (
 	flagListenAddress string
 	flagDebugAddress  string
 	flagDebugAllowAll bool
+
+	Log = log.New()
 )
 
 func init() {
 	flag.StringVar(&flagListenAddress, "listen_address", "127.0.0.1:4200", "gRPC listen address")
 	flag.StringVar(&flagDebugAddress, "debug_address", "127.0.0.1:4201", "HTTP debug/status listen address")
 	flag.BoolVar(&flagDebugAllowAll, "debug_allow_all", false, "HTTP debug/status available to everyone")
-	flag.Set("logtostderr", "true")
 }
 
 type Mirko struct {
@@ -128,7 +129,7 @@ func Trace(ctx context.Context, f string, args ...interface{}) {
 	tr, ok := trace.FromContext(ctx)
 	if !ok {
 		fmtd := fmt.Sprintf(f, args...)
-		log.Warning("no trace", "ctx", ctx, "msg", fmtd)
+		log.Warn("no trace", "ctx", ctx, "msg", fmtd)
 		return
 	}
 	tr.LazyPrintf(f, args...)
@@ -189,7 +190,7 @@ func (m *Mirko) Serve() error {
 	ticker := time.NewTicker(1 * time.Second)
 	select {
 	case <-ticker.C:
-		log.Info("listening", "grpc_addr", flagListenAddress, "http_addr", flagDebugAddress)
+		Log.Info("listening", "grpc_addr", flagListenAddress, "http_addr", flagDebugAddress)
 		return nil
 	case err := <-errs:
 		return err
