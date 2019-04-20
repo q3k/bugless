@@ -21,13 +21,19 @@ Diagram
     |             |              '-------------------'
     |             |---.
     '-------------'    \  gRPC   .-------------------.
-                        '------->| Authenticator     |
-                                 | (switchable)      |
-                                 '-------------------'
+          .             '------->| Authenticator     |
+          .                      | (switchable)      |
+          .           ...        '-------------------'
+    |             |  /
+    | APIFrontend |-'
+    | (Go)        |
+    |             |
+    '-------------'
 
 Pretty simple. We currently split the design into three main components:
 
  - the **WebFrontend**, an HTTP service accessible by end users, serving the main web interface of the tracker.
+ - the **APIFrontend**, a gateway for bots and scripts to perform actions on the tracker.
  - the **Model**, a nebulous service that provides the actual data storage (issues, components, hotlists)
  - the **Authenticator**, a nebulous service that allows people (either physical persons or bots) to authenticate and provides them with an identity. The Authenticator *might* also respond to authz/ACL requests.
 
@@ -46,6 +52,14 @@ The WebFrontend will have to join issues with user data from the authenticator. 
 
 The WebFrontend should be stateless and horizontally scalable. Thus, special considerations must be made for HTTP request routing to always hit the appropriate WebFrontend if there are any incompatible HTML/JS changes being rolled out. Additionally, WebFrontends should have the ability to steer customers to another instance or version of the WebFrontend (for when an old deployment is being drained and turned down). We are targetting whatever the k8s Ingress model supports (preferably not being dependent on GCP or Nginx ingress extensions).
 
+
+APIFrontend consideration
+-------------------------
+
+The APIFrontend is a service 'parallel' to the WebFrontend, providing similar functionality but via APIs. It *might* share some logic with the WebFrontend (and possibly other frontend), or might even be implemented in the same binary as the WebFrontend (and functionality can be selected by flags).
+
+The APIFrontend will nearly directly expose Model APIs to the end-users. It should only respond to requests authenticated via TLS client certificates.
+
 Model implementations
 ---------------------
 
@@ -59,10 +73,11 @@ Authenticator implementations
 
 TODO :)
 
-The gRPC Authenticator API should let at least two classes of flows be executed:
+The gRPC Authenticator API should let at least three classes of flows be executed:
 
  - plaintext username/password query passed through the frontend to the authenticator
  - OAuth browser flow
+ - TLS client certificate auth (with the Authenticator responding with user information based on a given TLS certificate CN)
 
 
 Multi-region HA
