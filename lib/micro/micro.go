@@ -10,7 +10,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/golang/glog"
+	log "github.com/inconshreveable/log15"
 	pki "github.com/q3k/hspki"
 	statusz "github.com/q3k/statusz"
 	"golang.org/x/net/trace"
@@ -128,7 +128,7 @@ func Trace(ctx context.Context, f string, args ...interface{}) {
 	tr, ok := trace.FromContext(ctx)
 	if !ok {
 		fmtd := fmt.Sprintf(f, args...)
-		glog.Warningf("No trace in %v: %s", ctx, fmtd)
+		log.Warning("no trace", "ctx", ctx, "msg", fmtd)
 		return
 	}
 	tr.LazyPrintf(f, args...)
@@ -189,8 +189,7 @@ func (m *Mirko) Serve() error {
 	ticker := time.NewTicker(1 * time.Second)
 	select {
 	case <-ticker.C:
-		glog.Infof("gRPC listening on %s", flagListenAddress)
-		glog.Infof("HTTP listening on %s", flagDebugAddress)
+		log.Info("listening", "grpc_addr", flagListenAddress, "http_addr", flagDebugAddress)
 		return nil
 	case err := <-errs:
 		return err
