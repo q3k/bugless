@@ -14,7 +14,7 @@ import (
 type service struct {
 }
 
-func (s *service) GetIssues(req *spb.ModelGetIssueRequest, srv spb.Model_GetIssuesServer) error {
+func (s *service) GetIssues(req *spb.ModelGetIssuesRequest, srv spb.Model_GetIssuesServer) error {
 	return status.Error(codes.Unimplemented, "unimplemented in dummy service")
 }
 

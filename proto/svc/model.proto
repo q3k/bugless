@@ -5,10 +5,10 @@ option go_package = "github.com/q3k/bugless/proto/svc";
 import "common/common.proto";
 
 service Model {
-    rpc GetIssues(ModelGetIssueRequest) returns (stream common.Issue);
+    rpc GetIssues(ModelGetIssuesRequest) returns (stream common.Issue);
 }
 
-message ModelGetIssueRequest {
+message ModelGetIssuesRequest {
     // ReturnType selects what fields will be present on the returned issue.
     enum ReturnType {
         RETURNTYPE_INVALID = 0;
