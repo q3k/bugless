@@ -1,3 +1,6 @@
+// Copyright 2019 Sergiusz Bazanski <q3k@q3k.org>
+// SPDX-License-Identifier: ISC
+
 syntax = "proto3";
 package bugless.svc;
 option go_package = "github.com/q3k/bugless/proto/svc";

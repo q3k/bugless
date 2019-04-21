@@ -1,3 +1,6 @@
+// Copyright 2019 Sergiusz Bazanski <q3k@q3k.org>
+// SPDX-License-Identifier: ISC
+
 package main
 
 import (
