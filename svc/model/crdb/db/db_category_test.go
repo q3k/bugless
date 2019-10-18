@@ -14,7 +14,7 @@ func TestCategoriesCRUD(t *testing.T) {
 
 	// Test fake category
 	_, err := db.Category().Get(ctx, "foo")
-	if want, got := CategoryNotFound, err; want != got {
+	if want, got := CategoryErrorNotFound, err; want != got {
 		t.Fatalf("Category.Get(invalid uuid): wanted %q, got %q", want, got)
 	}
 
@@ -26,7 +26,7 @@ func TestCategoriesCRUD(t *testing.T) {
 
 	// Check nonexistant category.
 	_, err = db.Category().Get(ctx, "ddacd7d8-6d4e-4013-be58-cac97fe12cc6")
-	if want, got := CategoryNotFound, err; want != got {
+	if want, got := CategoryErrorNotFound, err; want != got {
 		t.Fatalf("Category.Get(nonexistent): wanted %q, got %q", want, got)
 	}
 
@@ -209,7 +209,7 @@ func TestCategoriesCRUD(t *testing.T) {
 		t.Fatalf("Category.Delete(leaf): %v", err)
 	}
 	_, err = db.Category().Get(ctx, cat.UUID)
-	if want, got := CategoryNotFound, err; want != got {
+	if want, got := CategoryErrorNotFound, err; want != got {
 		t.Fatalf("Category.Get(removed):wanted %q, got %q", want, got)
 	}
 }

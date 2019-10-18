@@ -36,6 +36,7 @@ func main() {
 
 	ctx := context.Background()
 
+	// TODO(q3k): make this configurable
 	db, err := db.Connect(ctx, "cockroach://q3k@185.236.240.54:26257/bugless-q3k?sslmode=require&sslrootcert=certs/cockroach-ca.crt&sslcert=certs/cockroach-client.crt&sslkey=certs/cockroach-client.key")
 	if err != nil {
 		l.Crit("could not connect to database", "err", err)

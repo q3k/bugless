@@ -16,7 +16,7 @@ type CategoryError error
 var (
 	CategoryErrorParentNotFound   = status.Error(codes.NotFound, "parent not found")
 	CategoryErrorDuplicateName    = status.Error(codes.AlreadyExists, "duplicate category name")
-	CategoryNotFound              = status.Error(codes.NotFound, "category not found")
+	CategoryErrorNotFound         = status.Error(codes.NotFound, "category not found")
 	CategoryErrorCannotDeleteRoot = status.Error(codes.InvalidArgument, "cannot delete root category")
 	CategoryErrorNotEmpty         = status.Error(codes.FailedPrecondition, "category has dependent data")
 )
@@ -65,7 +65,7 @@ type CategoryGetter interface {
 
 func (d *databaseCategory) Get(ctx context.Context, uuid string) (*Category, error) {
 	conv := NewErrorConverter().
-		WithSyntaxError(CategoryNotFound)
+		WithSyntaxError(CategoryErrorNotFound)
 
 	data := []*Category{}
 
@@ -87,7 +87,7 @@ func (d *databaseCategory) Get(ctx context.Context, uuid string) (*Category, err
 	}
 
 	if len(data) != 1 {
-		return nil, CategoryNotFound
+		return nil, CategoryErrorNotFound
 	}
 
 	return data[0], nil
