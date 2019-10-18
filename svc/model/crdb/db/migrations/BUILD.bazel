@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//extras:embed_data.bzl", "go_embed_data")
+
+go_embed_data(
+    name = "migrations_data",
+    srcs = glob(["*.sql"]),
+    package = "migrations",
+    flatten = True,
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "migrations.go",
+        ":migrations_data",  # keep
+    ],
+    importpath = "github.com/q3k/bugless/svc/model/crdb/db/migrations",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_golang_migrate_migrate_v4//:go_default_library",
+        "@pl_hackerspace_code_hscloud//go/mirko:go_default_library",
+    ],
+)

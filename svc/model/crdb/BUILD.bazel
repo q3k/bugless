@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["crdb.go"],
+    importpath = "github.com/q3k/bugless/svc/model/crdb",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//proto/svc:go_default_library",
+        "//svc/model/crdb/db:go_default_library",
+        "@com_github_inconshreveable_log15//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@pl_hackerspace_code_hscloud//go/mirko:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "crdb",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,2 @@
+test --build_tests_only
+test --test_output=errors

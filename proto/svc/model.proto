@@ -5,7 +5,7 @@ syntax = "proto3";
 package bugless.svc;
 option go_package = "github.com/q3k/bugless/proto/svc";
 
-import "common/common.proto";
+import "proto/common/common.proto";
 
 service Model {
     rpc GetIssues(ModelGetIssuesRequest) returns (stream common.Issue);

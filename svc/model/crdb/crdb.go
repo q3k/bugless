@@ -4,10 +4,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 
 	"code.hackerspace.pl/hscloud/go/mirko"
 	spb "github.com/q3k/bugless/proto/svc"
+	"github.com/q3k/bugless/svc/model/crdb/db"
 
 	log "github.com/inconshreveable/log15"
 	"google.golang.org/grpc/codes"
@@ -15,6 +17,7 @@ import (
 )
 
 type service struct {
+	db db.Database
 }
 
 func (s *service) GetIssues(req *spb.ModelGetIssuesRequest, srv spb.Model_GetIssuesServer) error {
@@ -31,7 +34,22 @@ func main() {
 		return
 	}
 
-	s := &service{}
+	ctx := context.Background()
+
+	db, err := db.Connect(ctx, "cockroach://q3k@185.236.240.54:26257/bugless-q3k?sslmode=require&sslrootcert=certs/cockroach-ca.crt&sslcert=certs/cockroach-client.crt&sslkey=certs/cockroach-client.key")
+	if err != nil {
+		l.Crit("could not connect to database", "err", err)
+		return
+	}
+
+	if err := db.Migrate(); err != nil {
+		l.Crit("could not migrate database", "err", err)
+		return
+	}
+
+	s := &service{
+		db: db,
+	}
 	spb.RegisterModelServer(m.GRPC(), s)
 
 	if err := m.Serve(); err != nil {
