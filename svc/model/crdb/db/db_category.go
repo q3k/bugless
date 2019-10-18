@@ -43,9 +43,8 @@ type CategoryNode struct {
 type CategoryGetter interface {
 	// Get retrieves a database category by UUID.
 	Get(ctx context.Context, uuid string) (*Category, error)
-	// GetTree returns a (sub)tree of categories starting at a given UUID.
-	// If the rootUUID is an empty string, the main tree is returned. Othewise,
-	// a subtree rooted in rootUUID will be returned.
+	// GetTree returns a (sub)tree of categories starting at a given category
+	// UUID.
 	// At most `levels`  category tree levels. Level 0 means only the requested
 	// node, level 1 the node and its children, level 2 the node, it's children
 	// and it's grandchildren, etc.
@@ -226,13 +225,6 @@ func (d *databaseCategory) Update(ctx context.Context, cat *Category) error {
 		WithForeignKeyViolation(CategoryErrorParentNotFound).
 		WithUniqueConstraintViolation(CategoryErrorDuplicateName)
 
-	parent := RootCategory
-	if cat.ParentUUID != "" {
-		parent = cat.ParentUUID
-	}
-	data := *cat
-	data.ParentUUID = parent
-
 	q := `
 		UPDATE categories
 		SET
@@ -243,7 +235,7 @@ func (d *databaseCategory) Update(ctx context.Context, cat *Category) error {
 			id = :id
 	`
 
-	_, err := d.db.NamedExecContext(ctx, q, &data)
+	_, err := d.db.NamedExecContext(ctx, q, &cat)
 	return conv.Convert(err)
 }
 
