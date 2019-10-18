@@ -35,13 +35,13 @@ func TestCategoriesCRUD(t *testing.T) {
 		Name:       "test",
 		ParentUUID: RootCategory,
 	})
-	testCat := cat // used later in tests
 	if err != nil {
 		t.Fatalf("Could not create category: %v", err)
 	}
 	if cat.UUID == "" {
 		t.Fatalf("New category does not have UUID")
 	}
+	testCat := cat // used later in tests
 
 	// Test an unparseable parent
 	_, err = db.Category().New(ctx, &Category{
