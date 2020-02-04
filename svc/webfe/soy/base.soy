@@ -1,0 +1,67 @@
+// Copyright 2020 Sergiusz Bazanski <q3k@q3k.org>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+{namespace bugless.templates.base}
+
+{template .html}
+    {@param title: string}
+    <!doctype html>
+    <html>
+    	<head>
+    		<meta charset="UTF-8">
+    		<title>{$title}</title>
+    		<script src="/js.js"></script>
+    		<link rel="stylesheet" type="text/css" href="/gss.css" />
+    	</head>
+    	<body>
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>bugless<em>.</em></h1>
+                    <form>
+                        <input type="text" value="reporter:q3k@hackerspace.pl" />
+                        <button type="submit" class="button">Search</button>
+                    </form>
+                </div>
+                <div class="topbar-right">
+                    <a href="#">Sign in</a>
+                </div>
+            </div>
+            <div class="lowerhalf">
+                <div class="sidebar">
+                    <div class="padder">
+                        <a href="#" class="button button-accent button-large">New issue</a>
+                    </div>
+                    <hr />
+                    <div class="padder">
+                        <ul>
+                            <li><a href="#">Assigned to me</a></li>
+                            <li><a href="#">Starred by me</a></li>
+                            <li><a href="#">CC'd to me</a></li>
+                            <li class="selected"><a href="#">Reported by me</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="rightfiller">
+                    <div class="navbar">
+                        <button class="button">Back</button>
+                        <button class="button button-last">Refresh</button>
+
+                        <button class="button button-group">Close</button>
+                        <button class="button button-group">Comment</button>
+                        <button class="button button-last">Mark as duplicate</button>
+
+                        <div style="flex-grow: 1;"></div>
+
+                        <button class="button button-group">&lt;</button>
+                        <button class="button button-last">&gt;</button>
+                        <button class="button">Settings</button>
+                    </div>
+                </div>
+            </div>
+    		<script>
+    			//let container = document.getElementById('container');
+    			//bugless.run(container);
+    		</script>
+    	</body>
+    </html>
+{/template}

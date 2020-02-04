@@ -4,6 +4,8 @@ workspace(
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# Protobuf library
+
 http_archive(
     name = "com_google_protobuf",
     sha256 = "33cba8b89be6c81b1461f1c438424f7a1aa4e31998dbe9ed6f8319583daac8c7",
@@ -14,6 +16,8 @@ http_archive(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
+
+# Go & Gazelle rules
 
 http_archive(
     name = "io_bazel_rules_go",
@@ -42,6 +46,23 @@ go_register_toolchains()
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 gazelle_dependencies()
+
+# Closure rules
+
+http_archive(
+    name = "io_bazel_rules_closure",
+    sha256 = "7d206c2383811f378a5ef03f4aacbcf5f47fd8650f6abbc3fa89f3a27dd8b176",
+    strip_prefix = "rules_closure-0.10.0",
+    urls = [
+        "https://github.com/bazelbuild/rules_closure/archive/0.10.0.tar.gz",
+    ],
+)
+
+load("@io_bazel_rules_closure//closure:repositories.bzl", "rules_closure_dependencies", "rules_closure_toolchains")
+
+rules_closure_dependencies()
+
+rules_closure_toolchains()
 
 # Go repositories
 
@@ -374,5 +395,13 @@ go_repository(
     commit = "2c463c0e7d0d0876517f087ce2cce66a46182141",
     importpath = "github.com/jackc/chunkreader/v2",
     remote = "https://github.com/jackc/chunkreader",
+    vcs = "git",
+)
+
+go_repository(
+    name = "com_github_robfig_soy",
+    importpath = "github.com/robfig/soy",
+    remote = "https://github.com/q3k/soy",
+    commit = "3678b449aff0dc3bc0bf586b535a9ce94f201329",
     vcs = "git",
 )

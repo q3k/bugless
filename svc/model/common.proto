@@ -1,0 +1,61 @@
+syntax = 'proto3';
+package = 'bugless.svc.model.common';
+option go_package = 'github.com/q3k/bugless/svc/model/common';
+
+enum IssueType {
+    ISSUE_TYPE_INVALID = 0;
+
+    // The issue describes a way in which a product behaves differently from
+    // documented or expected.
+    ISSUE_TYPE_BUG = 1;
+    // The issue describes a change that, if implemented, would make the
+    // product better.
+    ISSUE_TYPE_FEATURE_REQUEST = 2;
+    // The issue describes what a third-party has encountered, ie. the reporter
+    // is not someone that has necessarily experienced the described behaviour.
+    // This issue might get fixed by customer support, or might turn into
+    // another type of issue if triaged.
+    ISSUE_TYPE_CUSTOMER_ISSUE = 3;
+    // The issue describes some invisible wart that should be resolved in order
+    // to make future work easier.
+    ISSUE_TYPE_INTERNAL_CLEANUP = 4;
+    // The issue is used to track some manual or automated process, ie.
+    // organizational/administrative tasks or half-implemented automation.
+    ISSUE_TYPE_PROCESS = 5;
+    // The issue describes a security vulnerability in a product that needs to
+    // be addressed. This is a superset of ISSUE_TYPE_BUG.
+    ISSUE_TYPE_VULNERABILITY = 6;
+}
+
+enum IssueStatus {
+    ISSUE_STATUS_INVALID = 0;
+
+    // The issue has been filed by a reporter but is not assibned to anyone
+    // yet.
+    ISSUE_STATUS_NEW = 1;
+    // The issue has been assigned to someone responsible for moving it forward
+    // (either resolving or assigning further).
+    ISSUE_STATUS_ASSIGNED = 2;
+    // The issue has been accepted by the assignee and is being actively worked
+    // on.
+    ISSUE_STATUS_ACCEPTED = 3;
+    // The issue has been fixed.
+    ISSUE_STATUS_FIXED = 4;
+    // The issue has been fixed and then verified to be fixed.
+    ISSUE_STATUS_FIXED_VERIFIED = 5;
+    // The issue could not be fixed because it could not be reproduced under
+    // the circumstances described.
+    ISSUE_STATUS_WONTFIX_NOT_REPRODUCIBLE = 6;
+    // The issue could not be fixed because the behaviour exhibited is
+    // intended.
+    ISSUE_STATUS_WONTFIX_INTENDED = 7;
+    // The issue could not be fixed because it is no longer relevant due to
+    // changes.
+    ISSUE_STATUS_WONTFIX_OBSOLETE = 8;
+    // The issue could not be fixed because the changes required are unreasonable.
+    ISSUE_STATUS_WONTFIX_INFEASIBLE = 9;
+    // The issue could not be fixed because of unfortunate external reasons.
+    ISSUE_STATUS_WONTFIX_UNFORTUNATE = 10;
+    // The issue is a duplicate of another issue.
+    ISSUE_STATUS_DUPLICATE = 11;
+}

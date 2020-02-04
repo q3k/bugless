@@ -1,0 +1,210 @@
+/* Copyright 2019 Sergiusz Bazanski <q3k@q3k.org>
+ * SPDX-License-Identifier: ISC
+ */
+
+/* Reset everything. */
+
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    background-color: #fff;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    color: #0085ff;
+}
+
+.topbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #eee;
+    border-bottom: 1px solid #ddd;
+    flex-grow: 0;
+}
+
+.topbar-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.topbar-left h1 {
+    font-size: 1.3em;
+    font-family: Helvetica, Arial, Sans-Serif;
+    font-weight: 200;
+    color: #f35128;
+    padding: 0.5em 1em 0.5em 1em;
+}
+
+.topbar-left h1 em {
+    color: #333;
+}
+
+
+.topbar-left input {
+    padding: 0.4em;
+    margin-right: 0.5em;
+    border: 1px solid #aaa;
+    width: 30vw;
+}
+
+.topbar a {
+    font-size: 0.9em;
+}
+
+a.button {
+    text-decoration: none;
+}
+
+.button {
+    border: 1px solid #d8d8d8;
+    background-color: #f8f8f8;
+    padding: 0.3em 0.5em 0.3em 0.5em;
+    text-align: center;
+    font-family: Helverica, Arial, Sans-Serif;
+    margin-right: 0.5em;
+}
+
+.button-accent {
+    border: 1px solid #11a;
+    background-color: #0085ff;
+    color: #fff;
+}
+
+.button-large {
+    padding: 0.4em 0.6em 0.4em 0.6em;
+}
+
+.button-red {
+    background-color: #ff8500;
+}
+
+.button-group {
+    margin-right: 0;
+    border-right: none;
+}
+
+.button-last {
+    margin-right: 1em;
+}
+
+hr {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #eee;
+    margin: 0;
+}
+
+.topbar-right {
+    padding: 0.2em 1em 0.2em 1em;
+}
+
+.lowerhalf {
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ddd;
+    align-items: flex-start;
+    flex-grow: 0;
+}
+
+.sidebar .padder {
+    padding: 0.8em;
+    display: flex;
+    flex-direction: column;
+    align-items: flext-start;
+}
+
+.sidebar ul {
+    padding-right: 1em;
+}
+
+.sidebar ul li {
+    margin: 0 0 0.8em 0;
+}
+
+.sidebar ul a {
+    text-decoration: none;
+    font-weight: 400;
+    color: #000;
+    font-family: Helvetica, Arial, Sans-Serif;
+    font-size: 0.9em;
+    padding: 0 0 0 1em;
+}
+
+.sidebar ul li.selected {
+    border-left: 4px solid #f35128;
+}
+
+.sidebar ul li.selected a {
+    color: #f35128;
+}
+
+.rightfiller {
+    flex-grow: 1;
+}
+
+.navbar {
+    padding: 0.5em;
+    border-bottom: 1px solid #eee;
+
+    display: flex;
+    flex-direction: row;
+}
+
