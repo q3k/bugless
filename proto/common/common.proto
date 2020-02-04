@@ -20,30 +20,87 @@ message Issue {
     int64 id = 1;
 
     // Fields set on creation.
-    string summary = 2;
-    Timestamp created = 3;
-    User creator = 4;
+    Timestamp created = 2;
+    User creator = 3;
 
     // Updates that have been sent to this issue (might not be populated, depending on request).
-    repeated Update updates = 5;
+    repeated Update updates = 4;
 
     // Denormalized fields from updates (might not be populated, depending on request).
-    User current_assignee = 6;
+    IssueState current = 5;
 }
 
-message Comment {
-    string sumamry = 1;
-}
-
-message Assignment {
-    User assignee = 1;
+message IssueState {
+    string title = 1;
+    User assignee = 2;
+    repeated User cc = 3;
+    IssueType type = 4;
+    int64 priority = 5;
+    IssueStatus status = 6;
 }
 
 message Update {
     Timestamp created = 1;
-    oneof kind {
-        Comment comment = 2;
-        Assignment assignment = 3;
-    };
+    User creator = 2;
+
+    string comment = 3;
+    IssueState status = 4;
 }
 
+enum IssueType {
+    ISSUE_TYPE_INVALID = 0;
+
+    // The issue describes a way in which a product behaves differently from
+    // documented or expected.
+    BUG = 1;
+    // The issue describes a change that, if implemented, would make the
+    // product better.
+    FEATURE_REQUEST = 2;
+    // The issue describes what a third-party has encountered, ie. the reporter
+    // is not someone that has necessarily experienced the described behaviour.
+    // This issue might get fixed by customer support, or might turn into
+    // another type of issue if triaged.
+    CUSTOMER_ISSUE = 3;
+    // The issue describes some invisible wart that should be resolved in order
+    // to make future work easier.
+    INTERNAL_CLEANUP = 4;
+    // The issue is used to track some manual or automated process, ie.
+    // organizational/administrative tasks or half-implemented automation.
+    PROCESS = 5;
+    // The issue describes a security vulnerability in a product that needs to
+    // be addressed. This is a superset of BUG.
+    VULNERABILITY = 6;
+}
+
+enum IssueStatus {
+    ISSUE_STATUS_INVALID = 0;
+
+    // The issue has been filed by a reporter but is not assibned to anyone
+    // yet.
+    NEW = 1;
+    // The issue has been assigned to someone responsible for moving it forward
+    // (either resolving or assigning further).
+    ASSIGNED = 2;
+    // The issue has been accepted by the assignee and is being actively worked
+    // on.
+    ACCEPTED = 3;
+    // The issue has been fixed.
+    FIXED = 4;
+    // The issue has been fixed and then verified to be fixed.
+    FIXED_VERIFIED = 5;
+    // The issue could not be fixed because it could not be reproduced under
+    // the circumstances described.
+    WONTFIX_NOT_REPRODUCIBLE = 6;
+    // The issue could not be fixed because the behaviour exhibited is
+    // intended.
+    WONTFIX_INTENDED = 7;
+    // The issue could not be fixed because it is no longer relevant due to
+    // changes.
+    WONTFIX_OBSOLETE = 8;
+    // The issue could not be fixed because the changes required are unreasonable.
+    WONTFIX_INFEASIBLE = 9;
+    // The issue could not be fixed because of unfortunate external reasons.
+    WONTFIX_UNFORTUNATE = 10;
+    // The issue is a duplicate of another issue.
+    DUPLICATE = 11;
+}

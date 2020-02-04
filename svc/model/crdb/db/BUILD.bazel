@@ -6,6 +6,7 @@ go_library(
         "db.go",
         "db_category.go",
         "db_errors.go",
+        "db_issue.go",
     ],
     importpath = "github.com/q3k/bugless/svc/model/crdb/db",
     visibility = ["//visibility:public"],
@@ -26,6 +27,7 @@ go_test(
     name = "go_default_test",
     srcs = [
         "db_category_test.go",
+        "db_issue_test.go",
         "db_test.go",
     ],
     embed = [":go_default_library"],

@@ -182,8 +182,33 @@ func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, e
 		WithForeignKeyViolation(CategoryErrorParentNotFound).
 		WithUniqueConstraintViolation(CategoryErrorDuplicateName)
 
-	// Create new category
+	tx := d.db.MustBeginTx(ctx, &sql.TxOptions{})
+	defer tx.Rollback()
+
+	// Ensure that the parent exists. This is a weird quirk of CRDB -
+	// constaints should be handling this instead!
+	// TODO(q3k): investigate this.
+	var count []int64
 	q := `
+		SELECT
+			COUNT(*)
+		FROM
+			categories
+		WHERE
+			id = $1
+	`
+	err := tx.Select(&count, q, new.ParentUUID)
+	log15.Info("dupa", "err", err, "count", count)
+	if err != nil {
+		return nil, conv.Convert(err)
+	}
+
+	if count[0] == 0 {
+		return nil, CategoryErrorParentNotFound
+	}
+
+	// Create new category
+	q = `
 		INSERT INTO categories
 			(parent_id, name, description)
 		VALUES
@@ -191,25 +216,27 @@ func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, e
 		RETURNING id
 	`
 	data := *new
-	rows, err := d.db.NamedQueryContext(ctx, q, &data)
+	rows, err := tx.NamedQuery(q, &data)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}
-	defer rows.Close()
-
 	// Get new ID
 	if !rows.Next() {
+		rows.Close()
 		return nil, status.Error(codes.Unavailable, "could not create category")
 	}
+
 	var uuid string
 	if err = rows.Scan(&uuid); err != nil {
+		rows.Close()
 		return nil, conv.Convert(err)
 	}
+	rows.Close()
 
 	log15.Info("created new category", "uuid", uuid, "name", data.Name)
 	data.UUID = uuid
 
-	return &data, nil
+	return &data, tx.Commit()
 }
 
 func (d *databaseCategory) Update(ctx context.Context, cat *Category) error {

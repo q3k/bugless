@@ -22,6 +22,7 @@ type Database interface {
 	Migrate() error
 
 	Category() CategoryGetter
+	Issue() IssueGetter
 }
 
 var traceRegistered = false
@@ -54,6 +55,7 @@ func Connect(ctx context.Context, dsn string) (Database, error) {
 		dsnCockroach: dsn,
 	}
 	res.category = &databaseCategory{res}
+	res.issue = &databaseIssue{res}
 
 	return res, nil
 }
@@ -64,9 +66,14 @@ type database struct {
 	dsnCockroach string
 
 	category *databaseCategory
+	issue    *databaseIssue
 }
 
 type databaseCategory struct {
+	*database
+}
+
+type databaseIssue struct {
 	*database
 }
 
@@ -86,4 +93,8 @@ func (d *database) Migrate() error {
 
 func (d *database) Category() CategoryGetter {
 	return d.category
+}
+
+func (d *database) Issue() IssueGetter {
+	return d.issue
 }

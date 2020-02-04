@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/q3k/bugless/svc/webfe",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//svc/webfe/gss:go_default_library",
+        "//svc/webfe/js:go_default_library",
+        "//svc/webfe/soy:go_default_library",
+        "@com_github_inconshreveable_log15//:go_default_library",
+        "@com_github_robfig_soy//:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "webfe",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

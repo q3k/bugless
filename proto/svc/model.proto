@@ -9,6 +9,7 @@ import "proto/common/common.proto";
 
 service Model {
     rpc GetIssues(ModelGetIssuesRequest) returns (stream common.Issue);
+    rpc NewIssue(ModelNewIssueRequest) returns (ModelNewIssueResponse);
 }
 
 message ModelGetIssuesRequest {
@@ -36,4 +37,15 @@ message ModelGetIssuesRequest {
         ById by_id = 2;
         BySearch by_search = 3;
     };
+}
+
+message ModelNewIssueRequest {
+    common.User creator = 1;
+
+    common.IssueState initial_state = 2;
+    string initial_comment = 3;
+}
+
+message ModelNewIssueResponse {
+    int64 id = 1;
 }

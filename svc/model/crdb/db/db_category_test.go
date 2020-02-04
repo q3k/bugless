@@ -70,7 +70,7 @@ func TestCategoriesCRUD(t *testing.T) {
 		ParentUUID: RootCategory,
 	})
 	if got, want := err, CategoryErrorDuplicateName; want != got {
-		t.Fatalf("Category.New(nonexistent parent): wanted %q, got %q", want, got)
+		t.Fatalf("Category.New(nonexistent parent): wanted %v, got %v", want, got)
 	}
 
 	// Add a bunch of categories
