@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "db.go",
+        "db_autosession.go",
         "db_category.go",
         "db_errors.go",
         "db_issue.go",

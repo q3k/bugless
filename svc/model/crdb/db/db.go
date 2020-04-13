@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -21,8 +22,17 @@ import (
 type Database interface {
 	Migrate() error
 
+	// Begin returns a database Session that must be commited, but can also be rolled back
+	Begin(ctx context.Context) Session
+	// Do returns a database Session that will automatically commit on every object access
+	Do(ctx context.Context) Session
+}
+
+type Session interface {
 	Category() CategoryGetter
 	Issue() IssueGetter
+	Commit() error
+	Rollback() error
 }
 
 var traceRegistered = false
@@ -54,8 +64,6 @@ func Connect(ctx context.Context, dsn string) (Database, error) {
 		dsnPostgres:  dsnPostgres,
 		dsnCockroach: dsn,
 	}
-	res.category = &databaseCategory{res}
-	res.issue = &databaseIssue{res}
 
 	return res, nil
 }
@@ -64,17 +72,6 @@ type database struct {
 	db           *sqlx.DB
 	dsnPostgres  string
 	dsnCockroach string
-
-	category *databaseCategory
-	issue    *databaseIssue
-}
-
-type databaseCategory struct {
-	*database
-}
-
-type databaseIssue struct {
-	*database
 }
 
 func (d *database) Migrate() error {
@@ -91,10 +88,43 @@ func (d *database) Migrate() error {
 	}
 }
 
-func (d *database) Category() CategoryGetter {
-	return d.category
+func (d *database) Begin(ctx context.Context) Session {
+	tx := d.db.MustBeginTx(ctx, &sql.TxOptions{})
+	res := &session{
+		ctx: ctx,
+		tx:  tx,
+	}
+	res.category = &databaseCategory{res}
+	res.issue = &databaseIssue{res}
+	return res
 }
 
-func (d *database) Issue() IssueGetter {
-	return d.issue
+func (d *database) Do(ctx context.Context) Session {
+	return &autoSession{
+		db:  d,
+		ctx: ctx,
+	}
+}
+
+type session struct {
+	ctx      context.Context
+	tx       *sqlx.Tx
+	category *databaseCategory
+	issue    *databaseIssue
+}
+
+func (s *session) Commit() error {
+	return s.tx.Commit()
+}
+
+func (s *session) Rollback() error {
+	return s.tx.Rollback()
+}
+
+func (s *session) Category() CategoryGetter {
+	return s.category
+}
+
+func (s *session) Issue() IssueGetter {
+	return s.issue
 }

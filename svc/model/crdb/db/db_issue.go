@@ -4,7 +4,6 @@
 package db
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -56,12 +55,16 @@ type IssueGetOptions struct {
 }
 
 type IssueGetter interface {
-	Get(ctx context.Context, id int64, opts IssueGetOptions) (*Issue, error)
-	New(ctx context.Context, new *Issue) (*Issue, error)
-	Update(ctx context.Context, update *IssueUpdate) error
+	Get(id int64, opts IssueGetOptions) (*Issue, error)
+	New(new *Issue) (*Issue, error)
+	Update(update *IssueUpdate) error
 }
 
-func (d *databaseIssue) Get(ctx context.Context, id int64, opts IssueGetOptions) (*Issue, error) {
+type databaseIssue struct {
+	*session
+}
+
+func (d *databaseIssue) Get(id int64, opts IssueGetOptions) (*Issue, error) {
 	conv := NewErrorConverter()
 
 	var data []*Issue
@@ -84,7 +87,7 @@ func (d *databaseIssue) Get(ctx context.Context, id int64, opts IssueGetOptions)
 			id = $1
 	`
 
-	err := d.db.SelectContext(ctx, &data, q, id)
+	err := d.tx.SelectContext(d.ctx, &data, q, id)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}
@@ -96,7 +99,7 @@ func (d *databaseIssue) Get(ctx context.Context, id int64, opts IssueGetOptions)
 	return data[0], nil
 }
 
-func (d *databaseIssue) New(ctx context.Context, new *Issue) (*Issue, error) {
+func (d *databaseIssue) New(new *Issue) (*Issue, error) {
 	if new.ID != 0 {
 		return nil, status.Error(codes.InvalidArgument, "issue cannot contain preset id")
 	}
@@ -119,7 +122,7 @@ func (d *databaseIssue) New(ctx context.Context, new *Issue) (*Issue, error) {
 		RETURNING id
 	`
 	data := *new
-	rows, err := d.db.NamedQueryContext(ctx, q, &data)
+	rows, err := d.tx.NamedQuery(q, &data)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}
@@ -141,10 +144,7 @@ func (d *databaseIssue) New(ctx context.Context, new *Issue) (*Issue, error) {
 	return &data, nil
 }
 
-func (d *databaseIssue) Update(ctx context.Context, update *IssueUpdate) error {
-	tx := d.db.MustBeginTx(ctx, &sql.TxOptions{})
-	defer tx.Rollback()
-
+func (d *databaseIssue) Update(update *IssueUpdate) error {
 	conv := NewErrorConverter()
 
 	now := time.Now().UnixNano()
@@ -185,7 +185,7 @@ func (d *databaseIssue) Update(ctx context.Context, update *IssueUpdate) error {
 	q += strings.Join(updateStrings, ", ")
 	q += fmt.Sprintf(" WHERE id = $%d", len(args)+1)
 	args = append(args, update.IssueID)
-	_, err := tx.Exec(q, args...)
+	_, err := d.tx.Exec(q, args...)
 	if err != nil {
 		return conv.Convert(err)
 	}
@@ -200,10 +200,10 @@ func (d *databaseIssue) Update(ctx context.Context, update *IssueUpdate) error {
 	`
 	data := *update
 	data.Created = now
-	_, err = tx.NamedExec(q, &data)
+	_, err = d.tx.NamedExec(q, &data)
 	if err != nil {
 		return conv.Convert(err)
 	}
 
-	return tx.Commit()
+	return nil
 }

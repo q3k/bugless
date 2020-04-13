@@ -15,26 +15,28 @@ func TestCategoriesCRUD(t *testing.T) {
 	db, stop := dut(ctx, t)
 	defer stop()
 
+	s := db.Do(ctx)
+
 	// Test fake category
-	_, err := db.Category().Get(ctx, "foo")
+	_, err := s.Category().Get("foo")
 	if want, got := CategoryErrorNotFound, err; want != got {
 		t.Fatalf("Category.Get(invalid uuid): wanted %q, got %q", want, got)
 	}
 
 	// Test root category
-	_, err = db.Category().Get(ctx, RootCategory)
+	_, err = s.Category().Get(RootCategory)
 	if err != nil {
 		t.Fatalf("Category.Get(root): %v", err)
 	}
 
 	// Check nonexistant category.
-	_, err = db.Category().Get(ctx, "ddacd7d8-6d4e-4013-be58-cac97fe12cc6")
+	_, err = s.Category().Get("ddacd7d8-6d4e-4013-be58-cac97fe12cc6")
 	if want, got := CategoryErrorNotFound, err; want != got {
 		t.Fatalf("Category.Get(nonexistent): wanted %q, got %q", want, got)
 	}
 
 	// Test creation happy path
-	cat, err := db.Category().New(ctx, &Category{
+	cat, err := s.Category().New(&Category{
 		Name:       "test",
 		ParentUUID: RootCategory,
 	})
@@ -47,7 +49,7 @@ func TestCategoriesCRUD(t *testing.T) {
 	testCat := cat // used later in tests
 
 	// Test an unparseable parent
-	_, err = db.Category().New(ctx, &Category{
+	_, err = s.Category().New(&Category{
 		Name:       "test",
 		ParentUUID: "fake", // unparseable
 	})
@@ -56,7 +58,7 @@ func TestCategoriesCRUD(t *testing.T) {
 	}
 
 	// Test a nonexistent parent
-	_, err = db.Category().New(ctx, &Category{
+	_, err = s.Category().New(&Category{
 		Name:       "test",
 		ParentUUID: "ddacd7d8-6d4e-4013-be58-cac97fe12cc6", // does not exist
 	})
@@ -65,7 +67,7 @@ func TestCategoriesCRUD(t *testing.T) {
 	}
 
 	// Test a duplicate name
-	_, err = db.Category().New(ctx, &Category{
+	_, err = s.Category().New(&Category{
 		Name:       "test",
 		ParentUUID: RootCategory,
 	})
@@ -79,7 +81,7 @@ func TestCategoriesCRUD(t *testing.T) {
 		name := fmt.Sprintf("category %d", i)
 		description := fmt.Sprintf("yes this is the category number %d very special", i)
 
-		cat, err = db.Category().New(ctx, &Category{
+		cat, err = s.Category().New(&Category{
 			Name:        name,
 			Description: description,
 			ParentUUID:  RootCategory,
@@ -95,7 +97,7 @@ func TestCategoriesCRUD(t *testing.T) {
 		wantName := fmt.Sprintf("category %d", i)
 		wantDescription := fmt.Sprintf("yes this is the category number %d very special", i)
 
-		cat, err = db.Category().Get(ctx, uuid)
+		cat, err = s.Category().Get(uuid)
 		if err != nil {
 			t.Fatalf("Could not retrieve category %q: %v", wantName, err)
 		}
@@ -111,7 +113,7 @@ func TestCategoriesCRUD(t *testing.T) {
 	}
 
 	// Check updating a category
-	cat, err = db.Category().New(ctx, &Category{
+	cat, err = s.Category().New(&Category{
 		Name:        "foo",
 		Description: "bar",
 		ParentUUID:  testCat.UUID,
@@ -123,12 +125,12 @@ func TestCategoriesCRUD(t *testing.T) {
 
 	cat.Name += "!"
 	cat.Description += "!"
-	err = db.Category().Update(ctx, cat)
+	err = s.Category().Update(cat)
 	if err != nil {
 		t.Fatalf("Could not update category: %v", err)
 	}
 
-	cat, err = db.Category().Get(ctx, cat.UUID)
+	cat, err = s.Category().Get(cat.UUID)
 	if err != nil {
 		t.Fatalf("Could not retrive category: %v", err)
 	}
@@ -142,7 +144,7 @@ func TestCategoriesCRUD(t *testing.T) {
 
 	// Check updating category with invalid args
 	cat.Name = ""
-	err = db.Category().Update(ctx, cat)
+	err = s.Category().Update(cat)
 	if err == nil {
 		t.Fatalf("Category with empty name didn't get rejected")
 	}
@@ -150,14 +152,14 @@ func TestCategoriesCRUD(t *testing.T) {
 	// Check updating category to nonexistent parent
 	cat.Name = "foo!"
 	cat.ParentUUID = "f1e89031-3307-4c47-b791-76136e13fc58" // doesn't exist
-	err = db.Category().Update(ctx, cat)
+	err = s.Category().Update(cat)
 	if want, got := CategoryErrorParentNotFound, err; want != got {
 		t.Errorf("Category.Update(nonexistent parent): wanted %q got %q", want, got)
 	}
 
 	// Check updating category to invalid parent
 	cat.ParentUUID = "foo"
-	err = db.Category().Update(ctx, cat)
+	err = s.Category().Update(cat)
 	if want, got := CategoryErrorParentNotFound, err; want != got {
 		t.Errorf("Category.Update(invalid parent): wanted %q got %q", want, got)
 	}
@@ -165,13 +167,13 @@ func TestCategoriesCRUD(t *testing.T) {
 	// Check updating category to duplicate name.
 	cat.ParentUUID = RootCategory
 	cat.Name = "test"
-	err = db.Category().Update(ctx, cat)
+	err = s.Category().Update(cat)
 	if want, got := CategoryErrorDuplicateName, err; want != got {
 		t.Errorf("Category.Update(duplicate name): wanted %q got %q", want, got)
 	}
 
 	// Move a category to another parent.
-	cat, err = db.Category().New(ctx, &Category{
+	cat, err = s.Category().New(&Category{
 		Name:        "foo",
 		Description: "bar",
 		ParentUUID:  testCat2.UUID,
@@ -180,12 +182,12 @@ func TestCategoriesCRUD(t *testing.T) {
 		t.Fatalf("Could not create category: %v", err)
 	}
 	cat.ParentUUID = testCat.UUID
-	err = db.Category().Update(ctx, cat)
+	err = s.Category().Update(cat)
 	if err != nil {
 		t.Fatalf("Could not update category: %v", err)
 	}
 
-	cat, err = db.Category().Get(ctx, cat.UUID)
+	cat, err = s.Category().Get(cat.UUID)
 	if err != nil {
 		t.Fatalf("Could not retrive category: %v", err)
 	}
@@ -195,23 +197,23 @@ func TestCategoriesCRUD(t *testing.T) {
 	}
 
 	// Check removing root category
-	err = db.Category().Delete(ctx, RootCategory)
+	err = s.Category().Delete(RootCategory)
 	if want, got := CategoryErrorCannotDeleteRoot, err; want != got {
 		t.Fatalf("Category.Delete(root): wanted %q, got %q", want, got)
 	}
 
 	// Check removing a non-leaf category
-	err = db.Category().Delete(ctx, testCat.UUID)
+	err = s.Category().Delete(testCat.UUID)
 	if want, got := CategoryErrorNotEmpty, err; want != got {
 		t.Fatalf("Category.Delete(non-leaf): wanted %q, got %q", want, got)
 	}
 
 	// Check removing a leaf category
-	err = db.Category().Delete(ctx, cat.UUID)
+	err = s.Category().Delete(cat.UUID)
 	if err != nil {
 		t.Fatalf("Category.Delete(leaf): %v", err)
 	}
-	_, err = db.Category().Get(ctx, cat.UUID)
+	_, err = s.Category().Get(cat.UUID)
 	if want, got := CategoryErrorNotFound, err; want != got {
 		t.Fatalf("Category.Get(removed):wanted %q, got %q", want, got)
 	}
@@ -222,8 +224,10 @@ func TestCategoriesTree(t *testing.T) {
 	db, stop := dut(ctx, t)
 	defer stop()
 
+	s := db.Do(ctx)
+
 	mkNode := func(name, parent string) string {
-		cat, err := db.Category().New(ctx, &Category{
+		cat, err := s.Category().New(&Category{
 			ParentUUID: parent,
 			Name:       name,
 		})
@@ -277,7 +281,7 @@ func TestCategoriesTree(t *testing.T) {
 
 	// Get entire tree and ensure the gang's all there.
 	func() {
-		tree, err := db.Category().GetTree(ctx, RootCategory, 4)
+		tree, err := s.Category().GetTree(RootCategory, 4)
 		if err != nil {
 			t.Fatalf("GetTree(root): %v", err)
 		}
@@ -313,7 +317,7 @@ func TestCategoriesTree(t *testing.T) {
 
 	// Get tree under B and ensure the gang's all here.
 	func() {
-		gotB, err := db.Category().GetTree(ctx, b, 3)
+		gotB, err := s.Category().GetTree(b, 3)
 		if err != nil {
 			t.Fatalf("GetTree(B, 3): %v", err)
 		}
@@ -336,7 +340,7 @@ func TestCategoriesTree(t *testing.T) {
 
 	// Get only direct children under B, make sure only they are returned.
 	func() {
-		gotB, err := db.Category().GetTree(ctx, b, 1)
+		gotB, err := s.Category().GetTree(b, 1)
 		if err != nil {
 			t.Fatalf("GetTree(B, 1): %v", err)
 		}
@@ -354,7 +358,7 @@ func TestCategoriesTree(t *testing.T) {
 
 	// Get only B, ensure _no_ children are returned.
 	func() {
-		gotB, err := db.Category().GetTree(ctx, b, 0)
+		gotB, err := s.Category().GetTree(b, 0)
 		if err != nil {
 			t.Fatalf("GetTree(B, 0): %v", err)
 		}

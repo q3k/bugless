@@ -35,3 +35,9 @@ func dut(ctx context.Context, t *testing.T) (Database, func()) {
 
 	return db, ts.Stop
 }
+
+func commit(s Session, t *testing.T) {
+	if err := s.Commit(); err != nil {
+		t.Fatalf("commit failed: %v", err)
+	}
+}

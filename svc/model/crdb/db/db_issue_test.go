@@ -11,14 +11,16 @@ func TestIssuesCRUD(t *testing.T) {
 	db, stop := dut(ctx, t)
 	defer stop()
 
+	s := db.Do(ctx)
+
 	// Nonexistent issue should fail
-	_, err := db.Issue().Get(ctx, 42, IssueGetOptions{})
+	_, err := s.Issue().Get(42, IssueGetOptions{})
 	if want, got := IssueErrorNotFound, err; want != got {
 		t.Fatalf("Issue.Get(nonexistent id): wanted %v, got %v", want, got)
 	}
 
 	// Issue creation happy path
-	issue, err := db.Issue().New(ctx, &Issue{
+	issue, err := s.Issue().New(&Issue{
 		Reporter: "q3k",
 		Title:    "test issue",
 		Assignee: "implr",
@@ -35,7 +37,7 @@ func TestIssuesCRUD(t *testing.T) {
 
 	// Retrieve that issue now
 	id := issue.ID
-	issue, err = db.Issue().Get(ctx, id, IssueGetOptions{})
+	issue, err = s.Issue().Get(id, IssueGetOptions{})
 	if err != nil {
 		t.Fatalf("Issue.Get(%d): wanted nil, got %v", id, err)
 	}
@@ -64,7 +66,9 @@ func TestIssueUpdates(t *testing.T) {
 	db, stop := dut(ctx, t)
 	defer stop()
 
-	issue, err := db.Issue().New(ctx, &Issue{
+	s := db.Do(ctx)
+
+	issue, err := s.Issue().New(&Issue{
 		Reporter: "q3k",
 		Title:    "test issue",
 		Assignee: "implr",
@@ -77,7 +81,7 @@ func TestIssueUpdates(t *testing.T) {
 	}
 	id := issue.ID
 
-	err = db.Issue().Update(ctx, &IssueUpdate{
+	err = s.Issue().Update(&IssueUpdate{
 		IssueID: id,
 		Author:  "q3k",
 		Title:   sql.NullString{"better issue", true},
@@ -87,7 +91,7 @@ func TestIssueUpdates(t *testing.T) {
 	}
 
 	// Check if issue got updates
-	issue, err = db.Issue().Get(ctx, id, IssueGetOptions{})
+	issue, err = s.Issue().Get(id, IssueGetOptions{})
 	if err != nil {
 		t.Fatalf("Issue.Get(%d): wanted nil, got %v", id, err)
 	}

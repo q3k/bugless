@@ -4,9 +4,6 @@
 package db
 
 import (
-	"context"
-	"database/sql"
-
 	_ "github.com/golang-migrate/migrate/v4/database/cockroachdb"
 	"github.com/inconshreveable/log15"
 	_ "github.com/lib/pq"
@@ -45,27 +42,31 @@ type CategoryNode struct {
 
 type CategoryGetter interface {
 	// Get retrieves a database category by UUID.
-	Get(ctx context.Context, uuid string) (*Category, error)
+	Get(uuid string) (*Category, error)
 	// GetTree returns a (sub)tree of categories starting at a given category
 	// UUID.
 	// At most `levels`  category tree levels. Level 0 means only the requested
 	// node, level 1 the node and its children, level 2 the node, it's children
 	// and it's grandchildren, etc.
-	GetTree(ctx context.Context, rootUUID string, levels uint) (*CategoryNode, error)
+	GetTree(rootUUID string, levels uint) (*CategoryNode, error)
 	// New creates a new database category from an in-memroy category.  UUID
 	// must be unset. ParentUUID should either point to an existing category
 	// (if the category is a chuild category) or be blank (if the category
 	// should be to-level).
-	New(ctx context.Context, new *Category) (*Category, error)
+	New(new *Category) (*Category, error)
 	// Update saves a given category. All fields can be updated apart from the
 	// current UUID.
-	Update(ctx context.Context, cat *Category) error
+	Update(cat *Category) error
 	// Delete removes a category. It must not contain any child categories or
 	// issues.
-	Delete(ctx context.Context, uuid string) error
+	Delete(uuid string) error
 }
 
-func (d *databaseCategory) Get(ctx context.Context, uuid string) (*Category, error) {
+type databaseCategory struct {
+	*session
+}
+
+func (d *databaseCategory) Get(uuid string) (*Category, error) {
 	conv := NewErrorConverter().
 		WithSyntaxError(CategoryErrorNotFound)
 
@@ -83,7 +84,7 @@ func (d *databaseCategory) Get(ctx context.Context, uuid string) (*Category, err
 			id = $1
 	`
 
-	err := d.db.SelectContext(ctx, &data, q, uuid)
+	err := d.tx.SelectContext(d.ctx, &data, q, uuid)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}
@@ -95,18 +96,15 @@ func (d *databaseCategory) Get(ctx context.Context, uuid string) (*Category, err
 	return data[0], nil
 }
 
-func (d *databaseCategory) GetTree(ctx context.Context, rootUUID string, levels uint) (*CategoryNode, error) {
+func (d *databaseCategory) GetTree(rootUUID string, levels uint) (*CategoryNode, error) {
 	// We retrieve the category tree in application code.
 	// CockroachDB has no suppport for recursive queries, and categories are
 	// not our main load. As such, this is good enough.
-	tx := d.db.MustBeginTx(ctx, &sql.TxOptions{})
-	defer tx.Rollback()
-
 	elems := make(map[string]*CategoryNode)
 	levelsM := make(map[string]uint)
 
 	// Get root.
-	elem, err := d.Get(ctx, rootUUID)
+	elem, err := d.Get(rootUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +139,7 @@ func (d *databaseCategory) GetTree(ctx context.Context, rootUUID string, levels 
 		`
 
 		data := []*Category{}
-		err := d.db.SelectContext(ctx, &data, q, uuid)
+		err := d.tx.SelectContext(d.ctx, &data, q, uuid)
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +164,7 @@ func (d *databaseCategory) GetTree(ctx context.Context, rootUUID string, levels 
 	return elems[rootUUID], nil
 }
 
-func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, error) {
+func (d *databaseCategory) New(new *Category) (*Category, error) {
 	if new.UUID != "" {
 		return nil, status.Error(codes.InvalidArgument, "category cannot contain preset UUID")
 	}
@@ -182,9 +180,6 @@ func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, e
 		WithForeignKeyViolation(CategoryErrorParentNotFound).
 		WithUniqueConstraintViolation(CategoryErrorDuplicateName)
 
-	tx := d.db.MustBeginTx(ctx, &sql.TxOptions{})
-	defer tx.Rollback()
-
 	// Ensure that the parent exists. This is a weird quirk of CRDB -
 	// constaints should be handling this instead!
 	// TODO(q3k): investigate this.
@@ -197,7 +192,7 @@ func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, e
 		WHERE
 			id = $1
 	`
-	err := tx.Select(&count, q, new.ParentUUID)
+	err := d.tx.SelectContext(d.ctx, &count, q, new.ParentUUID)
 	log15.Info("dupa", "err", err, "count", count)
 	if err != nil {
 		return nil, conv.Convert(err)
@@ -216,7 +211,8 @@ func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, e
 		RETURNING id
 	`
 	data := *new
-	rows, err := tx.NamedQuery(q, &data)
+	// TOOD(q3k): move to NamedQueryContext when available
+	rows, err := d.tx.NamedQuery(q, &data)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}
@@ -236,10 +232,10 @@ func (d *databaseCategory) New(ctx context.Context, new *Category) (*Category, e
 	log15.Info("created new category", "uuid", uuid, "name", data.Name)
 	data.UUID = uuid
 
-	return &data, tx.Commit()
+	return &data, nil
 }
 
-func (d *databaseCategory) Update(ctx context.Context, cat *Category) error {
+func (d *databaseCategory) Update(cat *Category) error {
 	if cat.UUID == "" {
 		return status.Error(codes.InvalidArgument, "an updated category must already be saved")
 	}
@@ -265,11 +261,11 @@ func (d *databaseCategory) Update(ctx context.Context, cat *Category) error {
 			id = :id
 	`
 
-	_, err := d.db.NamedExecContext(ctx, q, &cat)
+	_, err := d.tx.NamedExecContext(d.ctx, q, &cat)
 	return conv.Convert(err)
 }
 
-func (d *databaseCategory) Delete(ctx context.Context, uuid string) error {
+func (d *databaseCategory) Delete(uuid string) error {
 	if uuid == RootCategory {
 		return CategoryErrorCannotDeleteRoot
 	}
@@ -283,6 +279,6 @@ func (d *databaseCategory) Delete(ctx context.Context, uuid string) error {
 		WHERE id = $1
 	`
 
-	_, err := d.db.ExecContext(ctx, q, uuid)
+	_, err := d.tx.ExecContext(d.ctx, q, uuid)
 	return conv.Convert(err)
 }
