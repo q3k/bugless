@@ -50,12 +50,8 @@ type IssueUpdate struct {
 	Status   sql.NullInt64  `db:"status"`
 }
 
-type IssueGetOptions struct {
-	WithUpdates bool
-}
-
 type IssueGetter interface {
-	Get(id int64, opts IssueGetOptions) (*Issue, error)
+	Get(id int64) (*Issue, error)
 	New(new *Issue) (*Issue, error)
 	Update(update *IssueUpdate) error
 }
@@ -64,7 +60,7 @@ type databaseIssue struct {
 	*session
 }
 
-func (d *databaseIssue) Get(id int64, opts IssueGetOptions) (*Issue, error) {
+func (d *databaseIssue) Get(id int64) (*Issue, error) {
 	conv := NewErrorConverter()
 
 	var data []*Issue

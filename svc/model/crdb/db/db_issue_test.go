@@ -14,7 +14,7 @@ func TestIssuesCRUD(t *testing.T) {
 	s := db.Do(ctx)
 
 	// Nonexistent issue should fail
-	_, err := s.Issue().Get(42, IssueGetOptions{})
+	_, err := s.Issue().Get(42)
 	if want, got := IssueErrorNotFound, err; want != got {
 		t.Fatalf("Issue.Get(nonexistent id): wanted %v, got %v", want, got)
 	}
@@ -37,7 +37,7 @@ func TestIssuesCRUD(t *testing.T) {
 
 	// Retrieve that issue now
 	id := issue.ID
-	issue, err = s.Issue().Get(id, IssueGetOptions{})
+	issue, err = s.Issue().Get(id)
 	if err != nil {
 		t.Fatalf("Issue.Get(%d): wanted nil, got %v", id, err)
 	}
@@ -91,7 +91,7 @@ func TestIssueUpdates(t *testing.T) {
 	}
 
 	// Check if issue got updates
-	issue, err = s.Issue().Get(id, IssueGetOptions{})
+	issue, err = s.Issue().Get(id)
 	if err != nil {
 		t.Fatalf("Issue.Get(%d): wanted nil, got %v", id, err)
 	}

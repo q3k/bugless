@@ -85,9 +85,9 @@ func (c *autoSessionCategory) Delete(uuid string) error {
 	return s.Commit()
 }
 
-func (c *autoSessionIssue) Get(id int64, opts IssueGetOptions) (*Issue, error) {
+func (c *autoSessionIssue) Get(id int64) (*Issue, error) {
 	s := c.db.Begin(c.ctx)
-	issue, err := s.Issue().Get(id, opts)
+	issue, err := s.Issue().Get(id)
 	if err != nil {
 		s.Rollback()
 		return nil, err
