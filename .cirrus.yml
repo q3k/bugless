@@ -1,0 +1,15 @@
+container:
+  image: l.gcr.io/google/bazel:latest
+  cpu: 4
+  memory: 16G
+env:
+  COCKROACH_INCONSISTENT_TIME_ZONES: yes
+task:
+  name: Tests
+  test_script:
+    bazel test
+      --spawn_strategy=sandboxed
+      --strategy=Javac=sandboxed
+      --genrule_strategy=sandboxed
+      --remote_http_cache=http://$CIRRUS_HTTP_CACHE_HOST
+      //...
