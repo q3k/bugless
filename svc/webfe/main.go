@@ -6,12 +6,16 @@ package main
 import (
 	"net/http"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/inconshreveable/log15"
 	gosoy "github.com/robfig/soy"
+	"google.golang.org/grpc"
 
 	"github.com/q3k/bugless/svc/webfe/gss"
 	"github.com/q3k/bugless/svc/webfe/js"
 	"github.com/q3k/bugless/svc/webfe/soy"
+
+	pb "github.com/q3k/bugless/proto/svc"
 )
 
 func main() {
@@ -25,6 +29,16 @@ func main() {
 		log15.Crit("could not build tofu", "err", err)
 		return
 	}
+
+	grpcServer := grpc.NewServer()
+
+	proxy := &backendProxy{}
+
+	pb.RegisterModelServer(grpcServer, proxy)
+
+	wrappedGrpc := grpcweb.WrapServer(grpcServer)
+
+	http.Handle("/rpc/", http.StripPrefix("/rpc", http.HandlerFunc(wrappedGrpc.ServeHTTP)))
 
 	http.HandleFunc("/tofu", func(w http.ResponseWriter, r *http.Request) {
 		tofu.Render(w, "bugless.templates.note", map[string]interface{}{

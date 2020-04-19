@@ -51,10 +51,10 @@ gazelle_dependencies()
 
 http_archive(
     name = "io_bazel_rules_closure",
-    sha256 = "7d206c2383811f378a5ef03f4aacbcf5f47fd8650f6abbc3fa89f3a27dd8b176",
-    strip_prefix = "rules_closure-0.10.0",
+    sha256 = "d7a04263cf5b7af90f52d759da1e50c3cfe81c6cb16eec430af86e6bed248098",
+    strip_prefix = "rules_closure-0e187366b658d1796d2580f8b7e1a8d7e7e1492d",
     urls = [
-        "https://github.com/bazelbuild/rules_closure/archive/0.10.0.tar.gz",
+        "https://github.com/bazelbuild/rules_closure/archive/0e187366b658d1796d2580f8b7e1a8d7e7e1492d.zip",
     ],
 )
 
@@ -63,6 +63,16 @@ load("@io_bazel_rules_closure//closure:repositories.bzl", "rules_closure_depende
 rules_closure_dependencies()
 
 rules_closure_toolchains()
+
+# gRPC-Web rules
+http_archive(
+    name = "com_github_grpc_grpc_web",
+    sha256 = "3f3f8241188876a1943597e71dfcd90817c9a7d74240e3f6d6d50b2e27bb5e61",
+    strip_prefix = "grpc-web-289ec8020fd4aff7b6c968543781584a69844ce1",
+    urls = [
+        "https://github.com/grpc/grpc-web/archive/289ec8020fd4aff7b6c968543781584a69844ce1.tar.gz",
+    ],
+)
 
 # Go repositories
 
@@ -404,4 +414,32 @@ go_repository(
     remote = "https://github.com/q3k/soy",
     commit = "3678b449aff0dc3bc0bf586b535a9ce94f201329",
     vcs = "git",
+)
+
+go_repository(
+    name = "com_github_improbable_eng_grpc_web",
+    importpath = "github.com/improbable-eng/grpc-web",
+    sum = "h1:GlCS+lMZzIkfouf7CNqY+qqpowdKuJLSLLcKVfM1oLc=",
+    version = "v0.12.0",
+)
+
+go_repository(
+    name = "com_github_gorilla_websocket",
+    importpath = "github.com/gorilla/websocket",
+    sum = "h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=",
+    version = "v1.4.2",
+)
+
+go_repository(
+    name = "com_github_rs_cors",
+    importpath = "github.com/rs/cors",
+    sum = "h1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=",
+    version = "v1.7.0",
+)
+
+go_repository(
+    name = "com_github_desertbit_timer",
+    importpath = "github.com/desertbit/timer",
+    sum = "h1:U5y3Y5UE0w7amNe7Z5G/twsBW0KEalRQXZzf8ufSh9I=",
+    version = "v0.0.0-20180107155436-c41aec40b27f",
 )

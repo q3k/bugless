@@ -2,106 +2,41 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 goog.provide("bugless");
-goog.provide("bugless.notepad");
 
-goog.require("bugless.templates.bugless");
-
-goog.require("goog.dom");
-goog.require("goog.events");
-goog.require("goog.soy");
-
+goog.require("grpc.web.Status");
+goog.require("proto.bugless.svc.ModelPromiseClient");
 
 /**
- * A note.
+ * The main Bugless application.
  *
  * @constructor
- * @param {string} title The title of the note.
- * @param {string} content The content of the note.
- * @param {!Element} noteContainer Container to insert the note into.
+ * @param {!HTMLBodyElement} container Container to run app in.
  * @export
  */
-bugless.notepad.Note = function(title, content, noteContainer) {
-    this.title_ = title;
-    this.content_ = content;
-    this.parent_ = noteContainer;
+bugless.App = function(container) {
+    console.log("Starting Bugless...");
     /**
-     * @type {?HTMLTextAreaElement}
+     * @type {!HTMLBodyElement}
      * @private
+     * @const
+     * @suppress {unusedPrivateMembers}
      */
-    this.editorElement_ = null;
-    /**
-     * @type {?HTMLDivElement}
-     * @private
-     */
-    this.editorContainer_ = null;
-    /**
-     * @type {?HTMLDivElement}
-     * @private
-     */
-    this.contentElement_ = null;
+    this.container_ = container;
+    this.stub_ = new proto.bugless.svc.ModelPromiseClient("rpc", null, null);
 };
 
 /**
- * Make DOM for the note.
+ * Foo.
  */
-bugless.notepad.Note.prototype.render = function() {
-    let note = goog.dom.createDom(goog.dom.TagName.DIV, null);
-    goog.soy.renderElement(note, bugless.templates.bugless.note, {
-        'title': this.title_,
-        'content': this.content_,
-    });
-
-    this.editorElement_ = goog.dom.getElementByTagNameAndClass(goog.dom.TagName.TEXTAREA, "nt", note);
-    this.editorContainer_ = goog.dom.getElementByTagNameAndClass(goog.dom.TagName.DIV, "ne", note);
-    this.contentElement_ = goog.dom.getElementByTagNameAndClass(goog.dom.TagName.DIV, "nc", note);
-    let saveBtn = /** @type {!HTMLInputElement} */ (note.querySelector(".nb"));
-
-    goog.dom.appendChild(this.parent_, note);
-
-    goog.events.listen(this.contentElement_, goog.events.EventType.CLICK, this.openEditor, false, this);
-    goog.events.listen(saveBtn, goog.events.EventType.CLICK, this.save, false, this);
-};
-
-/**
- * Open note editor.
- */
-bugless.notepad.Note.prototype.openEditor = function() {
-    this.editorElement_.innerHTML = this.content_;
-    this.contentElement_.style.display = "none";
-    this.editorContainer_.style.display = "inline";
-};
-
-/**
- * Close the note editor.
- */
-bugless.notepad.Note.prototype.closeEditor = function() {
-    this.contentElement_.innerHTML = this.content_;
-    this.contentElement_.style.display = "inline";
-    this.editorContainer_.style.display = "none";
-};
-
-/**
- * Save the note. Event listener.
- *
- * @param {!goog.events.BrowserEvent} e Event.
- */
-bugless.notepad.Note.prototype.save = function(e)  {
-    this.content_ = this.editorElement_.value;
-    this.closeEditor();
-};
-
-/**
- * Makes all notes from list of data.
- *
- * @param {!Array<!{title: string, content: string}>} data Data to insert
- * @param {!Element} noteContainer Container to insert the notes into.
- * @returns {!Array<!bugless.notepad.Note>}
- */
-bugless.notepad.makeNotes = (data, noteContainer) => {
-    return data.map((datum) => {
-        let note = new bugless.notepad.Note(datum.title, datum.content, noteContainer);
-        note.render();
-        return note;
+bugless.App.prototype.foo = function() {
+    let req = new proto.bugless.svc.ModelGetIssuesRequest();
+    req.setReturnType(proto.bugless.svc.ModelGetIssuesRequest.ReturnType.RETURNTYPE_FULL);
+    let bySearch = new proto.bugless.svc.ModelGetIssuesRequest.BySearch();
+    bySearch.setSearch("foo");
+    req.setBySearch(bySearch);
+    let stream = this.stub_.getIssues(req, null);
+    stream.on('status', (/** @type {!grpc.web.Status.Status} */ status) => {
+        console.log("status", status);
     });
 };
 
@@ -112,8 +47,6 @@ bugless.notepad.makeNotes = (data, noteContainer) => {
  * @export
  */
 bugless.run = (container) => {
-    bugless.notepad.makeNotes([
-        { title: "foo", content: "lorem ipsum dolor sit amet?" },
-        { title: "baz", content: "lorem ipsum dolor sit amet!" },
-    ], container);
+    let app = new bugless.App(/** @type {!HTMLBodyElement} */ (container));
+    app.foo();
 };

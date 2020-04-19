@@ -8,9 +8,11 @@ closure_js_library(
         "hello.js",
     ],
     deps = [
+        "@com_github_grpc_grpc_web//javascript/net/grpc/web:status",
         "@io_bazel_rules_closure//closure/library",
         "@io_bazel_rules_closure//closure/library/ui:zippy",
         "//svc/webfe/soy",
+        "//proto/svc:svc_grpc_web_proto",
     ],
 )
 
