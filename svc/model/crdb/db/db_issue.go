@@ -51,8 +51,12 @@ type IssueUpdate struct {
 	Status   sql.NullInt64  `db:"status"`
 }
 
+type IssueGetHistoryOpts struct {
+}
+
 type IssueGetter interface {
 	Get(id int64) (*Issue, error)
+	GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*IssueUpdate, error)
 	New(new *Issue) (*Issue, error)
 	Update(update *IssueUpdate) error
 }
@@ -94,6 +98,36 @@ func (d *databaseIssue) Get(id int64) (*Issue, error) {
 	}
 
 	return data[0], nil
+}
+
+func (d *databaseIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*IssueUpdate, error) {
+	conv := NewErrorConverter()
+
+	var data []*IssueUpdate
+
+	q := `
+		SELECT
+			issue_updates.id AS id,
+			issue_updates.created AS created,
+			issue_updates.author AS author,
+			issue_updates.comment AS comment,
+			issue_updates.title AS title,
+			issue_updates.assignee AS assignee,
+			issue_updates.type AS type,
+			issue_updates.priority AS priority,
+			issue_updates.status AS status
+		FROM
+			issue_updates
+		WHERE
+			issue_updates.issue_id = $1
+	`
+
+	err := d.tx.SelectContext(d.ctx, &data, q, id)
+	if err != nil {
+		return nil, conv.Convert(err)
+	}
+
+	return data, nil
 }
 
 func (d *databaseIssue) New(new *Issue) (*Issue, error) {

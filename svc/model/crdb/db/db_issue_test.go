@@ -99,3 +99,81 @@ func TestIssueUpdates(t *testing.T) {
 		t.Fatalf("Issue.Title: wanted %q, got %q", want, got)
 	}
 }
+
+func TestIssueHistory(t *testing.T) {
+	ctx := context.Background()
+	db, stop := dut(ctx, t)
+	defer stop()
+
+	s := db.Do(ctx)
+
+	issue, err := s.Issue().New(&Issue{
+		Reporter: "q3k",
+		Title:    "test issue",
+		Assignee: "implr",
+		Type:     1,
+		Priority: 3,
+		Status:   2,
+	})
+	if err != nil {
+		t.Fatalf("Issue.New(okay): wanted nil, got %v", err)
+	}
+
+	for i, test := range []struct {
+		title    string
+		assignee string
+	}{
+		{"test issue - foo", ""},
+		{"test issue - foo", "foo"},
+		{"", "q3k"},
+	} {
+		u := &IssueUpdate{IssueID: issue.ID}
+		if test.title != "" {
+			u.Title = sql.NullString{test.title, true}
+		}
+		if test.assignee != "" {
+			u.Assignee = sql.NullString{test.assignee, true}
+		}
+		err := s.Issue().Update(u)
+		if err != nil {
+			t.Fatalf("test %d: %v", i, err)
+		}
+
+		updates, err := s.Issue().GetHistory(issue.ID, &IssueGetHistoryOpts{})
+		if err != nil {
+			t.Fatalf("test %d: GetHistory: %v", i, err)
+		}
+
+		if want, get := i+1, len(updates); want < get {
+			t.Fatalf("test %d: wanted %d updates, got %d", want, get)
+		}
+
+		update := updates[i]
+		if test.title != "" {
+			if want, get := test.title, update.Title.String; want != get {
+				t.Errorf("test %d, title, wanted %q, got %q", i, want, get)
+			}
+		}
+		if test.assignee != "" {
+			if want, get := test.assignee, update.Assignee.String; want != get {
+				t.Errorf("test %d, assignee, wanted %q, got %q", i, want, get)
+			}
+		}
+
+		issue2, err := s.Issue().Get(issue.ID)
+		if err != nil {
+			t.Fatalf("test %d, Issue().Get(%d): %v", i, issue.ID, err)
+		}
+
+		if test.title != "" {
+			if want, get := test.title, issue2.Title; want != get {
+				t.Errorf("test %d, title, wanted %q got %q", i, want, get)
+			}
+		}
+		if test.assignee != "" {
+			if want, get := test.assignee, issue2.Assignee; want != get {
+				t.Errorf("test %d, assignee, wanted %q got %q", i, want, get)
+			}
+		}
+	}
+}

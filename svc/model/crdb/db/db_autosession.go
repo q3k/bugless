@@ -95,6 +95,16 @@ func (c *autoSessionIssue) Get(id int64) (*Issue, error) {
 	return issue, s.Commit()
 }
 
+func (c *autoSessionIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*IssueUpdate, error) {
+	s := c.db.Begin(c.ctx)
+	issue, err := s.Issue().GetHistory(id, opts)
+	if err != nil {
+		s.Rollback()
+		return nil, err
+	}
+	return issue, s.Commit()
+}
+
 func (c *autoSessionIssue) New(new *Issue) (*Issue, error) {
 	s := c.db.Begin(c.ctx)
 	issue, err := s.Issue().New(new)
