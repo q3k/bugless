@@ -38,10 +38,11 @@ type Issue struct {
 }
 
 type IssueUpdate struct {
-	IssueID int64          `db:"issue_id"`
-	Created int64          `db:"created"`
-	Author  string         `db:"author"`
-	Comment sql.NullString `db:"comment"`
+	IssueID    int64          `db:"issue_id"`
+	UpdateUUID string         `db:"id"`
+	Created    int64          `db:"created"`
+	Author     string         `db:"author"`
+	Comment    sql.NullString `db:"comment"`
 
 	Title    sql.NullString `db:"title"`
 	Assignee sql.NullString `db:"assignee"`
@@ -189,10 +190,15 @@ func (d *databaseIssue) Update(update *IssueUpdate) error {
 	q = `
 		INSERT INTO issue_updates
 			(issue_id, created, author, comment,
-			 title, assignee, type, priority, status)
+			 title, assignee, type, priority, status,
+			 id)
 		VALUES
 			(:issue_id, :created, :author, :comment,
-			 :title, :assignee, :type, :priority, :status)
+			 :title, :assignee, :type, :priority, :status,
+			 (
+			   SELECT COUNT(*)+1 from issue_updates where issue_id = :issue_id
+			 )
+			)
 	`
 	data := *update
 	data.Created = now

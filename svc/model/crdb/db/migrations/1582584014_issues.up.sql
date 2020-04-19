@@ -75,9 +75,11 @@ CREATE TABLE issue_cc_lists (
 CREATE TABLE issue_updates(
     issue_id INT8 NOT NULL,
 
-    -- Updates just use an UUID. In the interface they also have a numerical
-    -- ID starting at #1 within an issue, but this is application generated.
-    id UUID DEFAULT gen_random_uuid(),
+    -- Updates also use a sequential ID. However, we do not use a crdb sequence,
+    -- instead we populate this within a query. This is done by counting the
+    -- current amount of updates for an issue, and setting this to +1.
+    -- This works because updating an issue locks it, so we don't have a rece.
+    id INT8 NOT NULL,
 
     -- When this update was created, int64 nanos since epoch.
     created INT NOT NULL,
@@ -109,7 +111,7 @@ CREATE TABLE issue_updates(
 
 CREATE TABLE issue_update_cc_lists (
     issue_id INT8 NOT NULL,
-    update_id UUID NOT NULL,
+    update_id INT8 NOT NULL,
 
     -- The actual member of the CC list. Opaque authn string.
     member STRING NOT NULL,
