@@ -12,6 +12,7 @@ go_library(
     importpath = "github.com/q3k/bugless/svc/model/crdb/db",
     visibility = ["//visibility:public"],
     deps = [
+        "//proto/common:go_default_library",
         "//svc/model/crdb/db/migrations:go_default_library",
         "@com_github_golang_migrate_migrate_v4//:go_default_library",
         "@com_github_golang_migrate_migrate_v4//database/cockroachdb:go_default_library",

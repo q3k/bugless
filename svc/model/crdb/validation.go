@@ -47,7 +47,7 @@ func validateUser(u *cpb.User) error {
 	if len(u.Id) > 64 {
 		return fmt.Errorf("must be shorter than 64 characters")
 	}
-	if len(u) < 1 {
+	if len(u.Id) < 1 {
 		return fmt.Errorf("must be at least one character")
 	}
 	// TODO: validate with authn

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	cpb "github.com/q3k/bugless/proto/common"
+
 	"github.com/inconshreveable/log15"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,6 +37,22 @@ type Issue struct {
 	Type     int64  `db:"type"`
 	Priority int64  `db:"priority"`
 	Status   int64  `db:"status"`
+}
+
+func (i *Issue) Proto() *cpb.Issue {
+	return &cpb.Issue{
+		Id:      i.ID,
+		Created: &cpb.Timestamp{Nanos: i.Created},
+		Creator: &cpb.User{Id: i.Reporter},
+		Current: &cpb.IssueState{
+			Title:    i.Title,
+			Assignee: &cpb.User{Id: i.Assignee},
+			Type:     cpb.IssueType(i.Type),
+			// TODO(q3k): return CC list
+			Priority: i.Priority,
+			Status:   cpb.IssueStatus(i.Status),
+		},
+	}
 }
 
 type IssueUpdate struct {

@@ -30,6 +30,10 @@ message Issue {
     IssueState current = 5;
 }
 
+// IssueState is the denormalized state of an issue. This does not contain issue
+// invariants, like creation timestamp, creator or ID.
+// These fields are either explicitely set or a figment of the imagination of the
+// current collapsed snapshot of an issue.
 message IssueState {
     string title = 1;
     User assignee = 2;
