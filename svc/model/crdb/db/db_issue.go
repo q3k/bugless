@@ -52,6 +52,8 @@ type IssueUpdate struct {
 }
 
 type IssueGetHistoryOpts struct {
+	Start int64
+	Count int64
 }
 
 type IssueGetter interface {
@@ -121,6 +123,15 @@ func (d *databaseIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*Issu
 		WHERE
 			issue_updates.issue_id = $1
 	`
+
+	if opts != nil {
+		if opts.Start > 0 {
+			q += fmt.Sprintf("AND issue_updates.id > %d", opts.Start)
+		}
+		if opts.Count > 0 {
+			q += fmt.Sprintf("LIMIT %d", opts.Count)
+		}
+	}
 
 	err := d.tx.SelectContext(d.ctx, &data, q, id)
 	if err != nil {

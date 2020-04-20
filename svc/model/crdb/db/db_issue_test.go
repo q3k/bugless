@@ -119,6 +119,7 @@ func TestIssueHistory(t *testing.T) {
 		t.Fatalf("Issue.New(okay): wanted nil, got %v", err)
 	}
 
+	// Create a handful of updates and check if they are retrievable.
 	for i, test := range []struct {
 		title    string
 		assignee string
@@ -126,6 +127,10 @@ func TestIssueHistory(t *testing.T) {
 		{"test issue - foo", ""},
 		{"test issue - foo", "foo"},
 		{"", "q3k"},
+		{"test issue - bar", ""},
+		{"test issue - bar", ""},
+		{"test issue - baz", ""},
+		{"test issue - barfoo", ""},
 	} {
 		u := &IssueUpdate{IssueID: issue.ID}
 		if test.title != "" {
@@ -139,7 +144,7 @@ func TestIssueHistory(t *testing.T) {
 			t.Fatalf("test %d: %v", i, err)
 		}
 
-		updates, err := s.Issue().GetHistory(issue.ID, &IssueGetHistoryOpts{})
+		updates, err := s.Issue().GetHistory(issue.ID, nil)
 		if err != nil {
 			t.Fatalf("test %d: GetHistory: %v", i, err)
 		}
@@ -174,6 +179,35 @@ func TestIssueHistory(t *testing.T) {
 			if want, get := test.assignee, issue2.Assignee; want != get {
 				t.Errorf("test %d, assignee, wanted %q got %q", i, want, get)
 			}
+		}
+	}
+
+	// Check retrieval options.
+	// We pushed 7 updates. These tests exercise that.
+	for i, test := range []struct {
+		start int64
+		count int64
+		want  int
+	}{
+		// valid requests
+		{0, 2, 2},
+		{1, 2, 2},
+		{0, 7, 7},
+		// over count
+		{5, 100, 2},
+		// weird values
+		{-42, -42, 7},
+	} {
+		updates, err := s.Issue().GetHistory(issue.ID, &IssueGetHistoryOpts{
+			Start: test.start,
+			Count: test.count,
+		})
+		if err != nil {
+			t.Errorf("test %d: GetHistory(start: %d, count: %d): %v", i, test.start, test.count, err)
+			continue
+		}
+		if want, got := test.want, len(updates); want != got {
+			t.Errorf("test %d: GetHistory(start: %d, count: %d): wanted %d updates, got %d", i, test.start, test.count, want, got)
 		}
 	}
 }
