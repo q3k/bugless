@@ -1,0 +1,38 @@
+// Copyright 2020 Sergiusz Bazanski <q3k@q3k.org>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+package bugless.svc;
+option go_package = "github.com/q3k/bugless/proto/svc";
+
+import "proto/common/common.proto";
+
+service Search {
+    rpc Search(SearchRequest) returns (stream SearchResponse);
+    rpc IndexIssue(IndexIssueRequest) returns (IndexIssueResponse);
+}
+
+message SearchRequest {
+    string query = 1;
+}
+
+message SearchResponse {
+    message Result {
+        enum Kind {
+            KIND_INVALID = 0;
+
+            KIND_ISSUE = 1;
+            KIND_CATEGORY = 2;
+            KIND_COMMENT = 3;
+        };
+
+        Kind kind = 1;
+    };
+    repeated Result results = 1;
+}
+
+message IndexIssueRequest {
+}
+
+message IndexIssueResponse {
+}

@@ -30,11 +30,11 @@ http_archive(
 
 http_archive(
     name = "bazel_gazelle",
+    sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz",
+        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
     ],
-    sha256 = "41bff2a0b32b02f20c227d234aa25ef3783998e5453f7eade929704dcff7cd4b",
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
@@ -442,4 +442,117 @@ go_repository(
     importpath = "github.com/desertbit/timer",
     sum = "h1:U5y3Y5UE0w7amNe7Z5G/twsBW0KEalRQXZzf8ufSh9I=",
     version = "v0.0.0-20180107155436-c41aec40b27f",
+)
+
+go_repository(
+    name = "com_github_blevesearch_bleve",
+    importpath = "github.com/blevesearch/bleve",
+    build_file_proto_mode = "disable",
+    sum = "h1:4PspZE7XABMSKcVpzAKp0E05Yer1PIYmTWk+1ngNr/c=",
+    version = "v1.0.7",
+)
+
+go_repository(
+    name = "com_github_blevesearch_segment",
+    importpath = "github.com/blevesearch/segment",
+    sum = "h1:5lG7yBCx98or7gK2cHMKPukPZ/31Kag7nONpoBt22Ac=",
+    version = "v0.9.0",
+)
+
+go_repository(
+    name = "com_github_blevesearch_snowballstem",
+    importpath = "github.com/blevesearch/snowballstem",
+    sum = "h1:lMQ189YspGP6sXvZQ4WZ+MLawfV8wOmPoD/iWeNXm8s=",
+    version = "v0.9.0",
+)
+
+go_repository(
+    name = "com_github_blevesearch_go_porterstemmer",
+    importpath = "github.com/blevesearch/go-porterstemmer",
+    sum = "h1:GtmsqID0aZdCSNiY8SkuPJ12pD4jI+DdXTAn4YRcHCo=",
+    version = "v1.0.3",
+)
+
+go_repository(
+    name = "com_github_steveyen_gtreap",
+    importpath = "github.com/steveyen/gtreap",
+    sum = "h1:CjhzTa274PyJLJuMZwIzCO1PfC00oRa8d1Kc78bFXJM=",
+    version = "v0.1.0",
+)
+
+go_repository(
+    name = "io_etcd_go_bbolt",
+    importpath = "go.etcd.io/bbolt",
+    sum = "h1:hi1bXHMVrlQh6WwxAy+qZCV/SYIlqo+Ushwdpa4tAKg=",
+    version = "v1.3.4",
+)
+
+go_repository(
+    name = "com_github_blevesearch_zap_v12",
+    importpath = "github.com/blevesearch/zap/v12",
+    sum = "h1:y8FWSAYkdc4p1dn4YLxNNr1dxXlSUsakJh2Fc/r6cj4=",
+    version = "v12.0.7",
+)
+
+go_repository(
+    name = "com_github_couchbase_vellum",
+    importpath = "github.com/couchbase/vellum",
+    sum = "h1:qrj9ohvZedvc51S5KzPfJ6P6z0Vqzv7Lx7k3mVc2WOk=",
+    version = "v1.0.1",
+)
+
+go_repository(
+    name = "com_github_glycerine_go_unsnap_stream",
+    importpath = "github.com/glycerine/go-unsnap-stream",
+    sum = "h1:FQqoVvjbiUioBBFUL5up+h+GdCa/AnJsL/1bIs/veSI=",
+    version = "v0.0.0-20190901134440-81cf024a9e0a",
+)
+
+go_repository(
+    name = "com_github_blevesearch_zap_v11",
+    importpath = "github.com/blevesearch/zap/v11",
+    sum = "h1:nnmAOP6eXBkqEa1Srq1eqA5Wmn4w+BZjLdjynNxvd+M=",
+    version = "v11.0.7",
+)
+
+go_repository(
+    name = "com_github_tinylib_msgp",
+    importpath = "github.com/tinylib/msgp",
+    sum = "h1:gWmO7n0Ys2RBEb7GPYB9Ujq8Mk5p2U08lRnmMcGy6BQ=",
+    version = "v1.1.2",
+)
+
+go_repository(
+    name = "com_github_philhofer_fwd",
+    importpath = "github.com/philhofer/fwd",
+    sum = "h1:UbZqGr5Y38ApvM/V/jEljVxwocdweyH+vmYvRPBnbqQ=",
+    version = "v1.0.0",
+)
+
+go_repository(
+    name = "com_github_golang_snappy",
+    importpath = "github.com/golang/snappy",
+    sum = "h1:Qgr9rKW7uDUkrbSmQeiDsGa8SjGyCOGtuasMWwvp2P4=",
+    version = "v0.0.1",
+)
+
+go_repository(
+    name = "com_github_blevesearch_mmap_go",
+    importpath = "github.com/blevesearch/mmap-go",
+    sum = "h1:JtMHb+FgQCTTYIhtMvimw15dJwu1Y5lrZDMOFXVWPk0=",
+    version = "v1.0.2",
+)
+
+go_repository(
+    name = "com_github_willf_bitset",
+    importpath = "github.com/willf/bitset",
+    sum = "h1:NotGKqX0KwQ72NUzqrjZq5ipPNDQex9lo3WpaS8L2sc=",
+    version = "v1.1.10",
+)
+
+go_repository(
+    name = "com_github_roaringbitmap_roaring",
+    importpath = "github.com/RoaringBitmap/roaring",
+    sum = "h1:gpyfd12QohbqhFO4NVDUdoPOCXsyahYRQhINmlHxKeo=",
+    version = "v0.4.23",
 )

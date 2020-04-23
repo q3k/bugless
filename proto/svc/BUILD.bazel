@@ -5,7 +5,10 @@ load("@com_github_grpc_grpc_web//bazel:closure_grpc_web_library.bzl", "closure_g
 
 proto_library(
     name = "svc_proto",
-    srcs = ["model.proto"],
+    srcs = [
+        "model.proto",
+        "search.proto",
+    ],
     visibility = ["//visibility:public"],
     deps = ["//proto/common:common_proto"],
 )
