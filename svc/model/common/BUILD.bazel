@@ -3,7 +3,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
+        "search.go",
         "search_lex.go",
+        "search_parse.go",
     ],
     importpath = "github.com/q3k/bugless/svc/model/common",
     visibility = ["//visibility:public"],
@@ -11,6 +13,10 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = ["search_lex_test.go"],
+    srcs = [
+        "search_lex_test.go",
+        "search_parse_test.go",
+        "search_test.go",
+    ],
     embed = [":go_default_library"],
 )

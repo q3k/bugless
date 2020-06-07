@@ -1,6 +1,19 @@
 package search
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
+
+func (t token) diff(o token) string {
+	if want, got := t.typ, o.typ; want != got {
+		return fmt.Sprintf("want type %v, got type %v", want, got)
+	}
+	if want, got := t.content, o.content; want != got {
+		return fmt.Sprintf("want content %q, got content %q", want, got)
+	}
+	return ""
+}
 
 func TestLex(t *testing.T) {
 	for i, te := range []struct {
@@ -38,12 +51,8 @@ func TestLex(t *testing.T) {
 		}
 
 		for j, token := range te.want {
-			if want, got := token.typ, gotTokens[j].typ; want != got {
-				t.Errorf("%d: token %d, want type %v, got type %v", i, j, want, got)
-				continue
-			}
-			if want, got := token.content, gotTokens[j].content; want != got {
-				t.Errorf("%d: token %d, want content %v, got content %v", i, j, want, got)
+			if diff := token.diff(gotTokens[j]); diff != "" {
+				t.Errorf("%d: token %d, %v", i, j, diff)
 				continue
 			}
 		}

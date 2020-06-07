@@ -2,8 +2,25 @@ package search
 
 import "fmt"
 
+// lexer is a simple lexer/tokenizer/scanner for the bugless query language.
+// It emits two types of tokens:
+//  - word, ie a whitespace separated literal that's part of the query, that
+//    can also be the result of grouping several query words into one query
+//    word by wrapping them in "double quotes"
+//  - colon, which is the ':' literal that's part of the query
+//
+// For example, the query:
+//    title: foo "bar baz"bar : foo
+// Would yield the following tokens:
+//    word(title), colon, word(foo), word(bar baz), word(bar), colon, word(foo)
+type lexer struct {
+	s string
+}
+
 type token struct {
-	typ     tokenType
+	// typ is the type of the token.
+	typ tokenType
+	// content is the literal, query-sourced content of the token.
 	content string
 }
 
@@ -11,7 +28,12 @@ type tokenType int
 
 const (
 	tokenTypeInvalid tokenType = iota
+	// tokenWord is a word, either coming from a literal word in the query or
+	// from a double quoted sentence of words including that can include
+	// whitespaces.
 	tokenWord
+	// tokenColon is the literal ':' character that was part of the query (if
+	// not quoted as part of a word).
 	tokenColon
 )
 
@@ -25,29 +47,7 @@ func (t token) String() string {
 	return "UNKNOWN"
 }
 
-type lexer struct {
-	s       string
-	peeking int
-}
-
-func (l *lexer) peek(n int) (string, bool) {
-	if len(l.s) < (l.peeking + n) {
-		return "", false
-	}
-	val := l.s[l.peeking : l.peeking+n]
-	l.peeking += n
-	return val, true
-}
-
-func (l *lexer) commit() {
-	l.s = l.s[l.peeking:]
-	l.peeking = 0
-}
-
 func (l *lexer) read(n int) (string, bool) {
-	if l.peeking != 0 {
-		panic("read with uncommited peek")
-	}
 	if len(l.s) < n {
 		return "", false
 	}
@@ -60,7 +60,7 @@ func (l *lexer) lex() (tokens []token, terminated bool) {
 	word := ""
 
 	for {
-		c, ok := l.peek(1)
+		c, ok := l.read(1)
 		if !ok {
 			if word != "" {
 				tokens = append(tokens, token{tokenWord, word})
@@ -72,7 +72,6 @@ func (l *lexer) lex() (tokens []token, terminated bool) {
 
 		switch c {
 		case ":":
-			l.commit()
 			if word != "" {
 				tokens = append(tokens, token{tokenWord, word})
 				word = ""
@@ -80,7 +79,6 @@ func (l *lexer) lex() (tokens []token, terminated bool) {
 			tokens = append(tokens, token{tokenColon, c})
 			continue
 		case "\"":
-			l.commit()
 			escaped := false
 			if word != "" {
 				tokens = append(tokens, token{tokenWord, word})
@@ -108,13 +106,11 @@ func (l *lexer) lex() (tokens []token, terminated bool) {
 		case " ":
 			fallthrough
 		case "\t":
-			l.commit()
 			if word != "" {
 				tokens = append(tokens, token{tokenWord, word})
 				word = ""
 			}
 		default:
-			l.commit()
 			word += c
 		}
 	}
