@@ -23,10 +23,12 @@ type service struct {
 
 var (
 	flagEatMyData bool
+	flagDSN       string
 )
 
 func main() {
 	flag.BoolVar(&flagEatMyData, "eat_my_data", false, "Run crdb model again an in-memory database. This will be cleared on shutdown, use this for development purposes only")
+	flag.StringVar(&flagDSN, "dsn", "", "DSN, like cockroach://user@host:port/database?sslmode=require&sslrootcert=...")
 	flag.Parse()
 	m := mirko.New()
 	l := log.New()
@@ -48,8 +50,17 @@ func main() {
 			return
 		}
 	} else {
+		if flagDSN == "" {
+			l.Crit("dsn must be set")
+			return
+		}
+		if !strings.HasPrefix(flagDSN, "cockroach://") {
+			l.Crit("dsn must start with cockroach://")
+			return
+		}
+
 		// TODO(q3k): make this configurable
-		d, err = db.Connect(ctx, "cockroach://bugless-dev@public.crdb-waw1:26257/bugless-dev?sslmode=require&sslrootcert=certs/cockroach-ca.crt&sslcert=certs/cockroach-client.crt&sslkey=certs/cockroach-client.key")
+		d, err = db.Connect(ctx, flagDSN)
 		if err != nil {
 			l.Crit("could not connect to database", "err", err)
 			return
