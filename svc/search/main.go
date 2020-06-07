@@ -4,13 +4,11 @@
 package main
 
 import (
-	"context"
 	"flag"
+	"os"
 
 	"code.hackerspace.pl/hscloud/go/mirko"
 	spb "github.com/q3k/bugless/proto/svc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/blevesearch/bleve"
 	log "github.com/inconshreveable/log15"
@@ -19,10 +17,6 @@ import (
 var (
 	flagLocalStorage = "index.bleve"
 )
-
-type service struct {
-	bl bleve.Index
-}
 
 func main() {
 	flag.StringVar(&flagLocalStorage, "local_storage", flagLocalStorage, "Path to local storage of this search service")
@@ -35,10 +29,18 @@ func main() {
 		return
 	}
 
-	mapping := bleve.NewIndexMapping()
-	bl, err := bleve.New(flagLocalStorage, mapping)
+	var bl bleve.Index
+	var err error
+	if _, err := os.Stat(flagLocalStorage); err == nil {
+		log.Info("Opening index", "path", flagLocalStorage)
+		bl, err = bleve.Open(flagLocalStorage)
+	} else {
+		log.Info("Creating new index", "path", flagLocalStorage)
+		mapping := createMapping()
+		bl, err = bleve.New(flagLocalStorage, mapping)
+	}
 	if err != nil {
-		l.Crit("could not create bleve index", "err", err)
+		l.Crit("could not create or open bleve index", "err", err)
 		return
 	}
 
@@ -53,12 +55,4 @@ func main() {
 	}
 
 	<-m.Done()
-}
-
-func (s *service) Search(req *spb.SearchRequest, srv spb.Search_SearchServer) error {
-	return status.Error(codes.Unimplemented, "nope")
-}
-
-func (s *service) IndexIssue(ctx context.Context, req *spb.IndexIssueRequest) (*spb.IndexIssueResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "nope")
 }

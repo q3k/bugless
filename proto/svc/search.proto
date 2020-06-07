@@ -7,16 +7,53 @@ option go_package = "github.com/q3k/bugless/proto/svc";
 
 import "proto/common/common.proto";
 
+// Search service - used to run full text search queries.
+// This is used for fuzzy search of issues / comments, nothing more.  more.
+// This service is useless for filtering issues by assignee, creator, etc.
 service Search {
-    rpc Search(SearchRequest) returns (stream SearchResponse);
+    // Query the available index. This queries for all types (issues and
+    // comments). Multiple QueryResponse objects might be returned. The client
+    // should read as many responses as it wants.
+    rpc Query(QueryRequest) returns (stream QueryResponse);
+    // Add a single issue to the index.
     rpc IndexIssue(IndexIssueRequest) returns (IndexIssueResponse);
 }
 
-message SearchRequest {
+message QueryRequest {
+    // Queries to the search engine are plain, user-controllable strings. These
+    // are in a 'well-known' format of being able to:
+    // - specify fields to search with 'field: value' syntac
+    // - specify term phrases by wrapping them in "double quotes"
+    // - specify required terms by prefixing with '+'
     string query = 1;
 }
 
-message SearchResponse {
+message QueryResponse {
+    // Location describes the location of a term within a field.
+    message Location {
+        // The index of this term within all terms of a field, 1-indexed. For
+        // example, 'foo' in 'bar foo baz' would have a pos of 2.
+        uint64 Pos = 1;
+        // Byte index of term within field, [start, end), 0-indexed.
+        uint64 Start = 2;
+        uint64 End = 3;
+    };
+
+    // Locations of a term within a field (multiple occurences are possible).
+    message Locations {
+        repeated Location locations = 1;
+    };
+
+    // Field value, and occurences of terms found within this field.
+    message LocationsByTerm {
+        map<string, Locations> locations_by_term = 1;
+        string field_data = 2;
+    };
+
+    message Issue {
+        int64 id = 1;
+    };
+
     message Result {
         enum Kind {
             KIND_INVALID = 0;
@@ -26,12 +63,24 @@ message SearchResponse {
             KIND_COMMENT = 3;
         };
 
+        // Enum/oneof combo for identifying a particular document type.
         Kind kind = 1;
+        oneof payload {
+            Issue issue = 2;
+        }
+
+        // All fields in which terms have been found.
+        map<string, LocationsByTerm> locations_by_term_field = 3;
     };
+
+    // The server might chose to provide multiple responses per QueryResponse,
+    // in addition to providing a stream of QueryResponses.
     repeated Result results = 1;
 }
 
 message IndexIssueRequest {
+    int64 id = 1;
+    string title = 2;
 }
 
 message IndexIssueResponse {
