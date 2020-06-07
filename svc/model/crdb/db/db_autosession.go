@@ -34,6 +34,7 @@ type autoSessionIssue struct {
 }
 
 // All praise Rob “Commander” Pike!
+// (I'm sure there's a better way to do this)
 
 func (c *autoSessionCategory) Get(uuid string) (*Category, error) {
 	s := c.db.Begin(c.ctx)
@@ -93,6 +94,16 @@ func (c *autoSessionIssue) Get(id int64) (*Issue, error) {
 		return nil, err
 	}
 	return issue, s.Commit()
+}
+
+func (c *autoSessionIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *IssueFilterOpts) ([]*Issue, error) {
+	s := c.db.Begin(c.ctx)
+	issues, err := s.Issue().Filter(filter, order, opts)
+	if err != nil {
+		s.Rollback()
+		return nil, err
+	}
+	return issues, s.Commit()
 }
 
 func (c *autoSessionIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*IssueUpdate, error) {

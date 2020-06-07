@@ -9,6 +9,7 @@ go_library(
     ],
     importpath = "github.com/q3k/bugless/svc/model/common",
     visibility = ["//visibility:public"],
+    deps = ["//proto/common:go_default_library"],
 )
 
 go_test(

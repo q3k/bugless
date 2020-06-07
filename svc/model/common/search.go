@@ -1,6 +1,10 @@
-package search
+package common
 
-import "strings"
+import (
+	"strings"
+
+	cpb "github.com/q3k/bugless/proto/common"
+)
 
 // Bugless provides a query language for search queries.
 //
@@ -68,4 +72,59 @@ func ParseSearch(s string) *SearchQuery {
 		}
 	}
 	return res
+}
+
+// ParseIssueStatus attempts to parse a human-provided string into a protobuf
+// issue status. If nothing could be parsed, INVALID is returned.
+func ParseIssueStatus(s string) cpb.IssueStatus {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if s == "" {
+		return cpb.IssueStatus_ISSUE_STATUS_INVALID
+	}
+
+	switch s {
+	case "new":
+		return cpb.IssueStatus_NEW
+	case "assigned":
+		return cpb.IssueStatus_ASSIGNED
+	case "accepted":
+		return cpb.IssueStatus_ACCEPTED
+	case "fixed":
+		return cpb.IssueStatus_FIXED
+
+	case "verified":
+		fallthrough
+	case "fixed_verified":
+		return cpb.IssueStatus_FIXED_VERIFIED
+
+	case "not_reproducible":
+		fallthrough
+	case "wontfix_not_reproducible":
+		return cpb.IssueStatus_WONTFIX_NOT_REPRODUCIBLE
+
+	case "intended":
+		fallthrough
+	case "wontfix_intended":
+		return cpb.IssueStatus_WONTFIX_INTENDED
+
+	case "obsolete":
+		fallthrough
+	case "wontfix_obsolete":
+		return cpb.IssueStatus_WONTFIX_OBSOLETE
+
+	case "infeasible":
+		fallthrough
+	case "wontfix_infeasible":
+		return cpb.IssueStatus_WONTFIX_INFEASIBLE
+
+	case "unfortunate":
+		fallthrough
+	case "wontfix_unfortunate":
+		return cpb.IssueStatus_WONTFIX_UNFORTUNATE
+
+	case "duplicate":
+		return cpb.IssueStatus_DUPLICATE
+	}
+
+	return cpb.IssueStatus_ISSUE_STATUS_INVALID
 }

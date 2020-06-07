@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	cpb "github.com/q3k/bugless/proto/common"
 	spb "github.com/q3k/bugless/proto/svc"
@@ -44,6 +45,8 @@ func validateUser(u *cpb.User) error {
 	if u == nil {
 		return fmt.Errorf("must be set")
 	}
+	// TODO(q3k): decide how opaque this actually is.
+	u.Id = strings.TrimSpace(strings.ToLower(u.Id))
 	if len(u.Id) > 64 {
 		return fmt.Errorf("must be shorter than 64 characters")
 	}

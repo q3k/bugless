@@ -19,6 +19,7 @@ import (
 
 type service struct {
 	db db.Database
+	l  log.Logger
 }
 
 var (
@@ -74,6 +75,7 @@ func main() {
 
 	s := &service{
 		db: d,
+		l:  l.New("component", "service"),
 	}
 	spb.RegisterModelServer(m.GRPC(), s)
 

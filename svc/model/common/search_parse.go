@@ -1,4 +1,4 @@
-package search
+package common
 
 // parser for bugless query language.
 type parser struct {

@@ -74,8 +74,33 @@ type IssueGetHistoryOpts struct {
 	Count int64
 }
 
+type IssueFilter struct {
+	// The filter passes when all the set fields match an issue.
+	Author   string
+	Assignee string
+	Status   int64
+}
+
+type IssueOrderBy struct {
+	Ascending bool
+	By        IssueOrder
+}
+
+type IssueOrder int
+
+const (
+	IssueOrderCreated IssueOrder = iota
+	IssueOrderUpdated
+)
+
+type IssueFilterOpts struct {
+	Start int64
+	Count int64
+}
+
 type IssueGetter interface {
 	Get(id int64) (*Issue, error)
+	Filter(filter IssueFilter, order IssueOrderBy, opts *IssueFilterOpts) ([]*Issue, error)
 	GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*IssueUpdate, error)
 	New(new *Issue) (*Issue, error)
 	Update(update *IssueUpdate) error
@@ -121,9 +146,6 @@ func (d *databaseIssue) Get(id int64) (*Issue, error) {
 }
 
 func (d *databaseIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*IssueUpdate, error) {
-	conv := NewErrorConverter()
-
-	var data []*IssueUpdate
 
 	q := `
 		SELECT
@@ -151,7 +173,89 @@ func (d *databaseIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*Issu
 		}
 	}
 
+	var data []*IssueUpdate
+	conv := NewErrorConverter()
 	err := d.tx.SelectContext(d.ctx, &data, q, id)
+	if err != nil {
+		return nil, conv.Convert(err)
+	}
+
+	return data, nil
+}
+
+func (d *databaseIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *IssueFilterOpts) ([]*Issue, error) {
+	q := `
+		SELECT
+			issues.id AS id,
+			issues.author AS author,
+			issues.created AS created,
+			issues.last_updated AS last_updated,
+
+			issues.title AS title,
+			issues.assignee AS assignee,
+			issues."type" AS "type",
+			issues.priority AS priority,
+			issues.status AS status
+		FROM
+			issues
+	`
+
+	var conditions []string
+	var parameters []interface{}
+	if filter.Author != "" {
+		parameters = append(parameters, filter.Author)
+		conditions = append(conditions, fmt.Sprintf("issues.author = $%d", len(parameters)))
+	}
+	if filter.Assignee != "" {
+		parameters = append(parameters, filter.Assignee)
+		conditions = append(conditions, fmt.Sprintf("issues.assignee = $%d", len(parameters)))
+	}
+	if filter.Status != 0 {
+		parameters = append(parameters, filter.Status)
+		conditions = append(conditions, fmt.Sprintf("issues.status = $%d", len(parameters)))
+	}
+
+	if opts != nil && opts.Start > 0 {
+		field := "issues.created"
+		switch order.By {
+		case IssueOrderUpdated:
+			field = "issues.last_updated"
+		}
+		parameters = append(parameters, opts.Start)
+		if order.Ascending {
+			conditions = append(conditions, fmt.Sprintf("%s > $%d", field, len(parameters)))
+		} else {
+			conditions = append(conditions, fmt.Sprintf("%s < $%d", field, len(parameters)))
+		}
+	}
+
+	if len(conditions) > 0 {
+		q += fmt.Sprintf(`
+			WHERE
+				%s
+		`, strings.Join(conditions, " AND "))
+	}
+
+	if order.Ascending {
+		q += `
+			ORDER BY issues.last_updated ASC
+		`
+	} else {
+		q += `
+			ORDER BY issues.last_updated DESC
+		`
+	}
+
+	if opts != nil && opts.Count > 0 {
+		parameters = append(parameters, opts.Count)
+		q += fmt.Sprintf(`
+			LIMIT $%d
+		`, len(parameters))
+	}
+
+	var data []*Issue
+	conv := NewErrorConverter()
+	err := d.tx.SelectContext(d.ctx, &data, q, parameters...)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}
