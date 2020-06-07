@@ -8,8 +8,8 @@ import (
 )
 
 func validateNewIssue(req *spb.ModelNewIssueRequest) error {
-	if err := validateUser(req.Creator); err != nil {
-		return fmt.Errorf("creator: %w", err)
+	if err := validateUser(req.Author); err != nil {
+		return fmt.Errorf("author: %w", err)
 	}
 	if req.InitialState == nil {
 		return fmt.Errorf("initial issue state must be set")

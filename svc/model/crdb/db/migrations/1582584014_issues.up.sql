@@ -15,7 +15,7 @@ CREATE TABLE issues (
 
     --- The following fields never change.
     -- Who reported the bug. Opaque authn string.
-    reporter STRING NOT NULL,
+    author STRING NOT NULL,
     -- When the issue was created, int64 nanos since epoch.
     created INT8 NOT NULL,
 

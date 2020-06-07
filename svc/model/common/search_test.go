@@ -9,8 +9,8 @@ func (q *SearchQuery) diff(o *SearchQuery) string {
 	if want, got := q.ID, o.ID; want != got {
 		return fmt.Sprintf("wanted ID %q, got %q", want, got)
 	}
-	if want, got := q.Creator, o.Creator; want != got {
-		return fmt.Sprintf("wanted Creator %q, got %q", want, got)
+	if want, got := q.Author, o.Author; want != got {
+		return fmt.Sprintf("wanted Author %q, got %q", want, got)
 	}
 	if want, got := q.Assignee, o.Assignee; want != got {
 		return fmt.Sprintf("wanted Assignee %q, got %q", want, got)
@@ -44,8 +44,8 @@ func TestParseSearch(t *testing.T) {
 		{"bugless \"bug less\"", &SearchQuery{
 			Keywords: []string{"bugless", "bug less"},
 		}},
-		{"creator:\"q3k@q3k.org\" \"foo bar\"", &SearchQuery{
-			Creator:  "q3k@q3k.org",
+		{"author:\"q3k@q3k.org\" \"foo bar\"", &SearchQuery{
+			Author:   "q3k@q3k.org",
 			Keywords: []string{"foo bar"},
 		}},
 	} {

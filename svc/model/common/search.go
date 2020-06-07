@@ -18,14 +18,14 @@ import "strings"
 // TODO(q3k): define a formal grammar before doing any more work on this.
 
 // Search query is a parsed, but lightly typed search query from the user. It
-// is the result of a string-based query (like creator:q3k foo status:bar).
+// is the result of a string-based query (like author:q3k foo status:bar).
 // All search string elements that could have been extracted end up in the
 // 'key' fields.
 type SearchQuery struct {
 	// Key fields. If set, the query selects that the given key must be set to
 	// its corresponding value.
 	ID       string
-	Creator  string
+	Author   string
 	Assignee string
 	Status   string
 
@@ -55,8 +55,8 @@ func ParseSearch(s string) *SearchQuery {
 			switch strings.ToLower(el.constraint.key.content) {
 			case "id":
 				res.ID = el.constraint.value.content
-			case "creator":
-				res.Creator = el.constraint.value.content
+			case "author":
+				res.Author = el.constraint.value.content
 			case "assignee":
 				res.Assignee = el.constraint.value.content
 			case "status":

@@ -21,7 +21,7 @@ func TestIssuesCRUD(t *testing.T) {
 
 	// Issue creation happy path
 	issue, err := s.Issue().New(&Issue{
-		Reporter: "q3k",
+		Author:   "q3k",
 		Title:    "test issue",
 		Assignee: "implr",
 		Type:     1,
@@ -41,8 +41,8 @@ func TestIssuesCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Issue.Get(%d): wanted nil, got %v", id, err)
 	}
-	if want, got := "q3k", issue.Reporter; want != got {
-		t.Errorf("issue.Reporter is %q, want %q", want, got)
+	if want, got := "q3k", issue.Author; want != got {
+		t.Errorf("issue.Author is %q, want %q", want, got)
 	}
 	if want, got := "test issue", issue.Title; want != got {
 		t.Errorf("issue.Title is %q, want %q", want, got)
@@ -69,7 +69,7 @@ func TestIssueUpdates(t *testing.T) {
 	s := db.Do(ctx)
 
 	issue, err := s.Issue().New(&Issue{
-		Reporter: "q3k",
+		Author:   "q3k",
 		Title:    "test issue",
 		Assignee: "implr",
 		Type:     1,
@@ -108,7 +108,7 @@ func TestIssueHistory(t *testing.T) {
 	s := db.Do(ctx)
 
 	issue, err := s.Issue().New(&Issue{
-		Reporter: "q3k",
+		Author:   "q3k",
 		Title:    "test issue",
 		Assignee: "implr",
 		Type:     1,

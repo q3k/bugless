@@ -30,7 +30,7 @@ message ModelGetIssuesRequest {
 }
 
 message ModelNewIssueRequest {
-    common.User creator = 1;
+    common.User author = 1;
 
     common.IssueState initial_state = 2;
     string initial_comment = 3;

@@ -21,7 +21,7 @@ message Issue {
 
     // Fields set on creation.
     Timestamp created = 2;
-    User creator = 3;
+    User author = 3;
 
     // Updates that have been sent to this issue (might not be populated, depending on request).
     repeated Update updates = 4;
@@ -31,7 +31,7 @@ message Issue {
 }
 
 // IssueState is the denormalized state of an issue. This does not contain issue
-// invariants, like creation timestamp, creator or ID.
+// invariants, like creation timestamp, author or ID.
 // These fields are either explicitely set or a figment of the imagination of the
 // current collapsed snapshot of an issue.
 message IssueState {
@@ -45,7 +45,7 @@ message IssueState {
 
 message Update {
     Timestamp created = 1;
-    User creator = 2;
+    User author = 2;
 
     string comment = 3;
     IssueState status = 4;
@@ -60,7 +60,7 @@ enum IssueType {
     // The issue describes a change that, if implemented, would make the
     // product better.
     FEATURE_REQUEST = 2;
-    // The issue describes what a third-party has encountered, ie. the reporter
+    // The issue describes what a third-party has encountered, ie. the author
     // is not someone that has necessarily experienced the described behaviour.
     // This issue might get fixed by customer support, or might turn into
     // another type of issue if triaged.
@@ -79,7 +79,7 @@ enum IssueType {
 enum IssueStatus {
     ISSUE_STATUS_INVALID = 0;
 
-    // The issue has been filed by a reporter but is not assibned to anyone
+    // The issue has been filed by an author but is not assibned to anyone
     // yet.
     NEW = 1;
     // The issue has been assigned to someone responsible for moving it forward

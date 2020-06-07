@@ -24,9 +24,9 @@ var (
 
 type Issue struct {
 	// Constant columns
-	ID       int64  `db:"id"`
-	Reporter string `db:"reporter"`
-	Created  int64  `db:"created"`
+	ID      int64  `db:"id"`
+	Author  string `db:"author"`
+	Created int64  `db:"created"`
 
 	// Bumped when a new update is added
 	LastUpdated int64 `db:"last_updated"`
@@ -43,7 +43,7 @@ func (i *Issue) Proto() *cpb.Issue {
 	return &cpb.Issue{
 		Id:      i.ID,
 		Created: &cpb.Timestamp{Nanos: i.Created},
-		Creator: &cpb.User{Id: i.Reporter},
+		Author:  &cpb.User{Id: i.Author},
 		Current: &cpb.IssueState{
 			Title:    i.Title,
 			Assignee: &cpb.User{Id: i.Assignee},
@@ -93,7 +93,7 @@ func (d *databaseIssue) Get(id int64) (*Issue, error) {
 	q := `
 		SELECT
 			issues.id AS id,
-			issues.reporter AS reporter,
+			issues.author AS author,
 			issues.created AS created,
 			issues.last_updated AS last_updated,
 
@@ -174,10 +174,10 @@ func (d *databaseIssue) New(new *Issue) (*Issue, error) {
 	conv := NewErrorConverter()
 	q := `
 		INSERT INTO issues
-			(reporter, created, last_updated,
+			(author, created, last_updated,
 			 title, assignee, "type", priority, status)
 		VALUES
-			(:reporter, :created, :last_updated,
+			(:author, :created, :last_updated,
 			 :title, :assignee, :type, :priority, :status)
 		RETURNING id
 	`

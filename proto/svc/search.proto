@@ -9,7 +9,7 @@ import "proto/common/common.proto";
 
 // Search service - used to run full text search queries.
 // This is used for fuzzy search of issues / comments, nothing more.  more.
-// This service is useless for filtering issues by assignee, creator, etc.
+// This service is useless for filtering issues by assignee, author, etc.
 service Search {
     // Query the available index. This queries for all types (issues and
     // comments). Multiple QueryResponse objects might be returned. The client

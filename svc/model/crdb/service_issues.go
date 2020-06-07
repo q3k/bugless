@@ -54,7 +54,7 @@ func (s *service) NewIssue(ctx context.Context, req *spb.ModelNewIssueRequest) (
 		assignee = i.Assignee.Id
 	}
 	issue, err := session.Issue().New(&db.Issue{
-		Reporter:    req.Creator.Id,
+		Author:      req.Author.Id,
 		Created:     now.UnixNano(),
 		LastUpdated: now.UnixNano(),
 		Title:       i.Title,
