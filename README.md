@@ -13,6 +13,12 @@ In development. Ready some day, maybe.
 Currently we have a CockroachDB backend/model, a frontend, and are able to list
 issues.
 
+**Stability and forward compatibilty**: this is pre-alpha software. All APIs,
+schemas, and assumptions are subject to change - **even ones that are currently
+written down as guarantees**. Once the software starts hitting alpha releases,
+things will slowly begin to stabilize.
+
+
 Building and running development instance
 -----------------------------------------
 
