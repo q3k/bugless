@@ -19,7 +19,7 @@ Building and running development instance
 Start the model with an in-memory database:
 
     bazel build //svc/model/crdb
-    bazel-bin/svc/model/crdb/*/crdb -hspki_disable
+    bazel-bin/svc/model/crdb/*/crdb -hspki_disable -eat_my_data
 
 The model will listen on `:4200` for gRPC and `:4201` for debug HTTP.
 
