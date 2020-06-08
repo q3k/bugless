@@ -3,7 +3,9 @@
 
 goog.provide("bugless");
 
-goog.require("grpc.web.Status");
+//goog.require("grpc.web.Status");
+goog.require("proto.bugless.common.Issue");
+goog.require("proto.bugless.svc.ModelGetIssuesRequest");
 goog.require("proto.bugless.svc.ModelPromiseClient");
 
 /**
@@ -30,13 +32,18 @@ bugless.App = function(container) {
  */
 bugless.App.prototype.foo = function() {
     let req = new proto.bugless.svc.ModelGetIssuesRequest();
-    req.setReturnType(proto.bugless.svc.ModelGetIssuesRequest.ReturnType.RETURNTYPE_FULL);
     let bySearch = new proto.bugless.svc.ModelGetIssuesRequest.BySearch();
-    bySearch.setSearch("foo");
+    bySearch.setSearch("author:q3k@q3k.org");
     req.setBySearch(bySearch);
     let stream = this.stub_.getIssues(req, null);
     stream.on('status', (/** @type {!grpc.web.Status.Status} */ status) => {
         console.log("status", status);
+    });
+    stream.on('data', (/** @type {!proto.bugless.common.Issue} */ response) => {
+      console.log("data", response);
+    });
+    stream.on('end', () => {
+      console.log("end");
     });
 };
 
@@ -47,6 +54,6 @@ bugless.App.prototype.foo = function() {
  * @export
  */
 bugless.run = (container) => {
+    /** @suppress {unusedLocalVariables} */
     let app = new bugless.App(/** @type {!HTMLBodyElement} */ (container));
-    app.foo();
 };

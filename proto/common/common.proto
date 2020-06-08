@@ -28,6 +28,9 @@ message Issue {
 
     // Denormalized fields from updates (might not be populated, depending on request).
     IssueState current = 5;
+
+    // When the issue was last updated
+    Timestamp last_updated = 6;
 }
 
 // IssueState is the denormalized state of an issue. This does not contain issue

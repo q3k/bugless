@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"io"
 
 	pb "github.com/q3k/bugless/proto/svc"
 	"google.golang.org/grpc/codes"
@@ -12,11 +13,28 @@ import (
 )
 
 type backendProxy struct {
+	model pb.ModelClient
 }
 
 func (b *backendProxy) GetIssues(req *pb.ModelGetIssuesRequest, srv pb.Model_GetIssuesServer) error {
 
-	return status.Error(codes.Unimplemented, "unimplemented")
+	upstream, err := b.model.GetIssues(srv.Context(), req)
+	if err != nil {
+		return err
+	}
+	for {
+		issue, err := upstream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if err := srv.Send(issue); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (b *backendProxy) NewIssue(ctx context.Context, req *pb.ModelNewIssueRequest) (*pb.ModelNewIssueResponse, error) {

@@ -67,10 +67,10 @@ rules_closure_toolchains()
 # gRPC-Web rules
 http_archive(
     name = "com_github_grpc_grpc_web",
-    sha256 = "3f3f8241188876a1943597e71dfcd90817c9a7d74240e3f6d6d50b2e27bb5e61",
-    strip_prefix = "grpc-web-289ec8020fd4aff7b6c968543781584a69844ce1",
+    sha256 = "283fdea0ff1539f47315700fc557837d539cbaa2b6e5e5dcb0b7280d3f054029",
+    strip_prefix = "grpc-web-6b99a37519fd5de2d46f7fd4d1d293504e15161f",
     urls = [
-        "https://github.com/grpc/grpc-web/archive/289ec8020fd4aff7b6c968543781584a69844ce1.tar.gz",
+        "https://github.com/grpc/grpc-web/archive/6b99a37519fd5de2d46f7fd4d1d293504e15161f.tar.gz",
     ],
 )
 
@@ -412,7 +412,7 @@ go_repository(
     name = "com_github_robfig_soy",
     importpath = "github.com/robfig/soy",
     remote = "https://github.com/q3k/soy",
-    commit = "3678b449aff0dc3bc0bf586b535a9ce94f201329",
+    commit = "c45262fef8da275270c3cf0cb781ed5d87188b38",
     vcs = "git",
 )
 
@@ -555,4 +555,18 @@ go_repository(
     importpath = "github.com/RoaringBitmap/roaring",
     sum = "h1:gpyfd12QohbqhFO4NVDUdoPOCXsyahYRQhINmlHxKeo=",
     version = "v0.4.23",
+)
+
+go_repository(
+    name = "com_github_stackexchange_wmi",
+    importpath = "github.com/stackexchange/wmi",
+    sum = "h1:OKjqz+yB+g0IS7H6EuOYhs9XMAal3zEfHmV4GR8EGDc=",
+    version = "v0.0.0-20190523213315-cbe66965904d",
+)
+
+go_repository(
+    name = "com_github_go_ole_go_ole",
+    importpath = "github.com/go-ole/go-ole",
+    sum = "h1:nNBDSCOigTSiarFpYE9J/KtEA1IOW4CNeqT9TQDqCxI=",
+    version = "v1.2.4",
 )

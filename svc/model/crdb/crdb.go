@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"code.hackerspace.pl/hscloud/go/mirko"
-	"github.com/cockroachdb/cockroach-go/testserver"
 	spb "github.com/q3k/bugless/proto/svc"
 	"github.com/q3k/bugless/svc/model/crdb/db"
 
+	"github.com/cockroachdb/cockroach-go/testserver"
 	log "github.com/inconshreveable/log15"
 )
 

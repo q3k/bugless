@@ -3,12 +3,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "convert.go",
         "main.go",
         "proxy.go",
     ],
     importpath = "github.com/q3k/bugless/svc/webfe",
     visibility = ["//visibility:private"],
     deps = [
+        "//proto/common:go_default_library",
         "//proto/svc:go_default_library",
         "//svc/webfe/gss:go_default_library",
         "//svc/webfe/js:go_default_library",
@@ -16,14 +18,20 @@ go_library(
         "@com_github_improbable_eng_grpc_web//go/grpcweb:go_default_library",
         "@com_github_inconshreveable_log15//:go_default_library",
         "@com_github_robfig_soy//:go_default_library",
+        "@com_github_robfig_soy//soyhtml:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
+        "@pl_hackerspace_code_hscloud//go/mirko:go_default_library",
+        "@pl_hackerspace_code_hscloud//go/pki:go_default_library",
     ],
 )
 
 go_binary(
     name = "webfe",
     embed = [":go_default_library"],
+    tags = [
+        "ibazel_live_reload",
+    ],
     visibility = ["//visibility:public"],
 )

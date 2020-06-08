@@ -12,7 +12,9 @@ closure_js_library(
         "@io_bazel_rules_closure//closure/library",
         "@io_bazel_rules_closure//closure/library/ui:zippy",
         "//svc/webfe/soy",
-        "//proto/svc:svc_grpc_web_proto",
+        "//proto/common:common_closure_proto",
+        "//proto/svc:svc_closure_proto",
+        "//proto/svc:svc_closure_grpc",
     ],
 )
 

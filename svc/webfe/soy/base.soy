@@ -5,12 +5,23 @@
 
 {template .html}
     {@param title: string}
+    {@param lvr: string}
+    {@param query: string}
+    {@param issues: list<[
+        id: string, priority: string, type: string,
+        title: string, assignee: string, status: string,
+        last_updated: string
+    ]>}
+    //]>}
     <!doctype html>
     <html>
     	<head>
     		<meta charset="UTF-8">
     		<title>{$title}</title>
     		<script src="/js.js"></script>
+            {if $lvr}
+            <script src="{$lvr}"></script>
+            {/if}
     		<link rel="stylesheet" type="text/css" href="/gss.css" />
     	</head>
     	<body id="container">
@@ -18,7 +29,7 @@
                 <div class="topbar-left">
                     <h1>bugless<em>.</em></h1>
                     <form>
-                        <input type="text" value="author:q3k@hackerspace.pl" />
+                        <input type="text" value="{$query}" />
                         <button type="submit" class="button">Search</button>
                     </form>
                 </div>
@@ -43,19 +54,47 @@
                 </div>
                 <div class="rightfiller">
                     <div class="navbar">
-                        <button class="button">Back</button>
                         <button class="button button-last">Refresh</button>
-
-                        <button class="button button-group">Close</button>
-                        <button class="button button-group">Comment</button>
-                        <button class="button button-last">Mark as duplicate</button>
 
                         <div style="flex-grow: 1;"></div>
 
+                        <span>1 - {length($issues)} of {length($issues)}</span>
                         <button class="button button-group">&lt;</button>
                         <button class="button button-last">&gt;</button>
                         <button class="button">Settings</button>
                     </div>
+
+                    <table class="issuelist">
+                        
+                        <tr>
+                            <th style="padding-right: 0;">P</th>
+                            <th>Type</th>
+                            <th class="stretch">Title</th>
+                            <th>Assignee</th>
+                            <th>Status</th>
+                            <th>ID</th>
+                            <th>Last Modified</th>
+                        </tr>
+                        {for $issue in $issues}
+                        <tr>
+                            <td style="padding-right: 0;" class="prio-{$issue.priority}">P{$issue.priority}</td>
+                            <td>{$issue.type}</td>
+                            <td class="stretch" style="font-weight: 800;">
+                                <a href="#">{$issue.title}</a>
+                            </td>
+                            <td>
+                                {if $issue.assignee}
+                                    {$issue.assignee}
+                                {else}
+                                    <i>none</i>
+                                {/if}
+                            </td>
+                            <td>{$issue.status}</td>
+                            <td>{$issue.id}</td>
+                            <td>{$issue.last_updated}</td>
+                        </tr>
+                        {/for}
+                    </table>
                 </div>
             </div>
     		<script>

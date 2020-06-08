@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
-load("@io_bazel_rules_closure//closure:defs.bzl", "closure_js_proto_library")
+load("@io_bazel_rules_closure//closure:defs.bzl", "closure_proto_library")
 load("@com_github_grpc_grpc_web//bazel:closure_grpc_web_library.bzl", "closure_grpc_web_library")
 
 proto_library(
@@ -22,15 +22,14 @@ go_proto_library(
     deps = ["//proto/common:go_default_library"],
 )
 
-closure_js_proto_library(
-    name = "js",
-    srcs = ["model.proto"],
-    suppress = ["JSC_TYPE_MISMATCH"],
+closure_proto_library(
+    name = "svc_closure_proto",
+    deps = [":svc_proto"],
     visibility = ["//visibility:public"],
 )
 
 closure_grpc_web_library(
-    name = "svc_grpc_web_proto",
+    name = "svc_closure_grpc",
     deps = [":svc_proto"],
     visibility = ["//visibility:public"],
 )

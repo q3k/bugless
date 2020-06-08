@@ -52,6 +52,7 @@ func (i *Issue) Proto() *cpb.Issue {
 			Priority: i.Priority,
 			Status:   cpb.IssueStatus(i.Status),
 		},
+		LastUpdated: &cpb.Timestamp{Nanos: i.LastUpdated},
 	}
 }
 
