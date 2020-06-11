@@ -193,7 +193,6 @@ func (d *databaseCategory) New(new *Category) (*Category, error) {
 			id = $1
 	`
 	err := d.tx.SelectContext(d.ctx, &count, q, new.ParentUUID)
-	log15.Info("dupa", "err", err, "count", count)
 	if err != nil {
 		return nil, conv.Convert(err)
 	}

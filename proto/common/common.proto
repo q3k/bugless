@@ -23,8 +23,7 @@ message Issue {
     Timestamp created = 2;
     User author = 3;
 
-    // Updates that have been sent to this issue (might not be populated, depending on request).
-    repeated Update updates = 4;
+    reserved 4;
 
     // Denormalized fields from updates (might not be populated, depending on request).
     IssueState current = 5;
@@ -51,7 +50,7 @@ message Update {
     User author = 2;
 
     string comment = 3;
-    IssueState status = 4;
+    IssueState state = 4;
 }
 
 enum IssueType {

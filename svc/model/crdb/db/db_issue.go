@@ -57,17 +57,43 @@ func (i *Issue) Proto() *cpb.Issue {
 }
 
 type IssueUpdate struct {
-	IssueID    int64          `db:"issue_id"`
-	UpdateUUID string         `db:"id"`
-	Created    int64          `db:"created"`
-	Author     string         `db:"author"`
-	Comment    sql.NullString `db:"comment"`
+	IssueID  int64          `db:"issue_id"`
+	UpdateID int64          `db:"id"`
+	Created  int64          `db:"created"`
+	Author   string         `db:"author"`
+	Comment  sql.NullString `db:"comment"`
 
 	Title    sql.NullString `db:"title"`
 	Assignee sql.NullString `db:"assignee"`
 	Type     sql.NullInt64  `db:"type"`
 	Priority sql.NullInt64  `db:"priority"`
 	Status   sql.NullInt64  `db:"status"`
+}
+
+func (u *IssueUpdate) Proto() *cpb.Update {
+	state := &cpb.IssueState{}
+	if u.Title.Valid {
+		state.Title = u.Title.String
+	}
+	if u.Assignee.Valid {
+		state.Assignee = &cpb.User{Id: u.Assignee.String}
+	}
+	if u.Type.Valid {
+		state.Type = cpb.IssueType(u.Type.Int64)
+	}
+	if u.Priority.Valid {
+		state.Priority = u.Priority.Int64
+	}
+	if u.Status.Valid {
+		state.Status = cpb.IssueStatus(u.Status.Int64)
+	}
+
+	return &cpb.Update{
+		Created: &cpb.Timestamp{Nanos: u.Created},
+		Author:  &cpb.User{Id: u.Author},
+		Comment: u.Comment.String,
+		State:   state,
+	}
 }
 
 type IssueGetHistoryOpts struct {
@@ -216,17 +242,21 @@ func (d *databaseIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *Iss
 		conditions = append(conditions, fmt.Sprintf("issues.status = $%d", len(parameters)))
 	}
 
+	orderField := "issues.created"
 	if opts != nil && opts.Start > 0 {
-		field := "issues.created"
 		switch order.By {
+		case IssueOrderCreated:
+			orderField = "issues.created"
 		case IssueOrderUpdated:
-			field = "issues.last_updated"
+			orderField = "issues.last_updated"
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "invalid order")
 		}
 		parameters = append(parameters, opts.Start)
 		if order.Ascending {
-			conditions = append(conditions, fmt.Sprintf("%s > $%d", field, len(parameters)))
+			conditions = append(conditions, fmt.Sprintf("%s > $%d", orderField, len(parameters)))
 		} else {
-			conditions = append(conditions, fmt.Sprintf("%s < $%d", field, len(parameters)))
+			conditions = append(conditions, fmt.Sprintf("%s < $%d", orderField, len(parameters)))
 		}
 	}
 
@@ -238,13 +268,13 @@ func (d *databaseIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *Iss
 	}
 
 	if order.Ascending {
-		q += `
-			ORDER BY issues.last_updated ASC
-		`
+		q += fmt.Sprintf(`
+			ORDER BY %s ASC
+		`, orderField)
 	} else {
-		q += `
-			ORDER BY issues.last_updated DESC
-		`
+		q += fmt.Sprintf(`
+			ORDER BY %s DESC
+		`, orderField)
 	}
 
 	if opts != nil && opts.Count > 0 {

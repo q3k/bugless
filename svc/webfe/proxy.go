@@ -37,6 +37,26 @@ func (b *backendProxy) GetIssues(req *pb.ModelGetIssuesRequest, srv pb.Model_Get
 	return nil
 }
 
+func (b *backendProxy) GetIssueUpdates(req *pb.ModelGetIssueUpdatesRequest, srv pb.Model_GetIssueUpdatesServer) error {
+	upstream, err := b.model.GetIssueUpdates(srv.Context(), req)
+	if err != nil {
+		return err
+	}
+	for {
+		chunk, err := upstream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if err := srv.Send(chunk); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (b *backendProxy) NewIssue(ctx context.Context, req *pb.ModelNewIssueRequest) (*pb.ModelNewIssueResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }

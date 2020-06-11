@@ -10,7 +10,13 @@ import "proto/common/common.proto";
 service Model {
     // GetIssues returns requested issue(s) without their updates.
     rpc GetIssues(ModelGetIssuesRequest) returns (stream common.Issue);
+    // GetIssueUpdates returns the update history of an issue.
+    rpc GetIssueUpdates(ModelGetIssueUpdatesRequest) returns (stream ModelGetIssueUpdatesChunk);
+    // NewIssue creates a new issue with an initial state and comment.
     rpc NewIssue(ModelNewIssueRequest) returns (ModelNewIssueResponse);
+    // UpdateIssues adds an update to an issue, adding to history and updating
+    // the current state of the issue.
+    rpc UpdateIssue(ModelUpdateIssueRequest) returns (ModelUpdateIssueResponse);
 }
 
 message ModelGetIssuesRequest {
@@ -27,6 +33,50 @@ message ModelGetIssuesRequest {
         ById by_id = 2;
         BySearch by_search = 3;
     };
+
+    common.Timestamp after = 4;
+    int64 count = 5;
+    enum OrderBy {
+        ORDER_BY_INVALID = 0;
+        ORDER_BY_CREATED = 1;
+        ORDER_BY_LAST_UPDATE = 2;
+    };
+    OrderBy order_by = 6;
+}
+
+message ModelGetIssueUpdatesRequest {
+    // The issue for which to request history.
+    int64 id = 1;
+    enum Mode {
+        MODE_INVALID = 0;
+        // Request the current issue status and a number of updates, as defined
+        // by parameters in this request.
+        MODE_STATUS_AND_UPDATES = 1;
+        // Possible future options: only updates, stream updates live, ...
+    };
+    Mode mode = 2;
+
+    // If set, only return updates newer than this timestamp.
+    common.Timestamp after = 3;
+    // If set, return at most these many updates. Otherwise, the service will
+    // an arbitrary number of updates.
+    int64 count = 4;
+}
+
+message ModelGetIssueUpdatesChunk {
+    // Meta information about this response - update count statistics, etc.
+    // This will be set on the first stream chunk sent by the server, and
+    // not set in subsequent chunks.
+    message Metadata {
+        // Total update count for this issue, as of start of this stream.
+        int64 update_count = 1;
+    };
+    Metadata metadata = 1;
+
+    // For the first chunk, the current issue state is returned, too.
+    common.Issue current = 2;
+
+    repeated common.Update updates = 3;
 }
 
 message ModelNewIssueRequest {
@@ -38,4 +88,18 @@ message ModelNewIssueRequest {
 
 message ModelNewIssueResponse {
     int64 id = 1;
+}
+
+message ModelUpdateIssueRequest {
+    // Issue to update, by ID.
+    int64 id = 1;
+    // The author of this update.
+    common.User author = 2;
+    // Comment that accomapnies this update. Can be empty.
+    string comment = 3;
+    // The new data to set. All unset fields are not updated.
+    common.IssueState new = 4;
+}
+
+message ModelUpdateIssueResponse {
 }

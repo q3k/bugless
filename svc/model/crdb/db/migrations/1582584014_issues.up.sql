@@ -78,7 +78,7 @@ CREATE TABLE issue_updates(
     -- Updates also use a sequential ID. However, we do not use a crdb sequence,
     -- instead we populate this within a query. This is done by counting the
     -- current amount of updates for an issue, and setting this to +1.
-    -- This works because updating an issue locks it, so we don't have a rece.
+    -- This works because updating an issue locks it, so we don't have a race.
     id INT8 NOT NULL,
 
     -- When this update was created, int64 nanos since epoch.
