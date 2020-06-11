@@ -1,16 +1,18 @@
-package main
+package service
 
 import (
 	"context"
 
 	spb "github.com/q3k/bugless/proto/svc"
 	"github.com/q3k/bugless/svc/model/common/pagination"
+	"github.com/q3k/bugless/svc/model/common/validation"
 	"github.com/q3k/bugless/svc/model/crdb/db"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func (s *service) GetIssueUpdates(req *spb.ModelGetIssueUpdatesRequest, srv spb.Model_GetIssueUpdatesServer) error {
+func (s *Service) GetIssueUpdates(req *spb.ModelGetIssueUpdatesRequest, srv spb.Model_GetIssueUpdatesServer) error {
 	ctx := srv.Context()
 
 	// TODO(q3k): define the consistency guarantees for this call.
@@ -36,8 +38,8 @@ func (s *service) GetIssueUpdates(req *spb.ModelGetIssueUpdatesRequest, srv spb.
 	})
 }
 
-func (s *service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequest) (*spb.ModelUpdateIssueResponse, error) {
-	if err := validateUser(req.Author); err != nil {
+func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequest) (*spb.ModelUpdateIssueResponse, error) {
+	if err := validation.User(req.Author); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "author: %v", err)
 	}
 	if req.New == nil {
@@ -60,16 +62,16 @@ func (s *service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 		update.Assignee.Valid = true
 		update.Assignee.String = req.New.Assignee.Id
 	}
-	if validateIssueType(req.New.Type) == nil {
+	if validation.IssueType(req.New.Type) == nil {
 		update.Type.Valid = true
 		update.Type.Int64 = int64(req.New.Type)
 	}
 	// TODO(q3k): fix not being able to set P0, this requires a schema fix
-	if req.New.Priority > 0 && validateIssuePriority(req.New.Priority) == nil {
+	if req.New.Priority > 0 && validation.IssuePriority(req.New.Priority) == nil {
 		update.Priority.Valid = true
 		update.Priority.Int64 = req.New.Priority
 	}
-	if validateIssueStatus(req.New.Status) == nil {
+	if validation.IssueStatus(req.New.Status) == nil {
 		update.Status.Valid = true
 		update.Status.Int64 = int64(req.New.Status)
 	}

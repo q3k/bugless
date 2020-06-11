@@ -4,23 +4,14 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
-	"strings"
 
 	"code.hackerspace.pl/hscloud/go/mirko"
 	spb "github.com/q3k/bugless/proto/svc"
-	"github.com/q3k/bugless/svc/model/crdb/db"
+	"github.com/q3k/bugless/svc/model/crdb/service"
 
-	"github.com/cockroachdb/cockroach-go/testserver"
 	log "github.com/inconshreveable/log15"
 )
-
-type service struct {
-	db db.Database
-	l  log.Logger
-}
 
 var (
 	flagEatMyData bool
@@ -41,42 +32,20 @@ func main() {
 
 	ctx := m.Context()
 
-	var d db.Database
+	var s *Service
 	var err error
+
 	if flagEatMyData {
 		l.Warn("Running with in-memory database. This WILL EAT YOUR DATA")
-		d, err = inMemoryDatabase(ctx)
-		if err != nil {
-			l.Crit("could not create in memory database", "err", err)
-			return
-		}
+		s, err = service.NewInMemory(ctx, l)
 	} else {
-		if flagDSN == "" {
-			l.Crit("dsn must be set")
-			return
-		}
-		if !strings.HasPrefix(flagDSN, "cockroach://") {
-			l.Crit("dsn must start with cockroach://")
-			return
-		}
-
-		// TODO(q3k): make this configurable
-		d, err = db.Connect(ctx, flagDSN)
-		if err != nil {
-			l.Crit("could not connect to database", "err", err)
-			return
-		}
+		s, err = service.NewDSN(fctx, lagDSN, true, l)
 	}
-
-	if err := d.Migrate(); err != nil {
-		l.Crit("could not migrate database", "err", err)
+	if err != nil {
+		l.Crit("creating service failed", "err", err)
 		return
 	}
 
-	s := &service{
-		db: d,
-		l:  l.New("component", "service"),
-	}
 	spb.RegisterModelServer(m.GRPC(), s)
 
 	if err := m.Serve(); err != nil {
@@ -85,28 +54,4 @@ func main() {
 	}
 
 	<-m.Done()
-}
-
-func inMemoryDatabase(ctx context.Context) (db.Database, error) {
-	ts, err := testserver.NewTestServer()
-	if err != nil {
-		return nil, fmt.Errorf("NewTestServer: %v", err)
-	}
-	if err := ts.Start(); err != nil {
-		return nil, fmt.Errorf("testserver.Start: %v", err)
-	}
-
-	dsn := "cockroach://" + strings.TrimPrefix(ts.PGURL().String(), "postgresql://")
-
-	d, err := db.Connect(ctx, dsn)
-	if err != nil {
-		return nil, fmt.Errorf("could not connect to new database: %v", err)
-	}
-
-	go func() {
-		<-ctx.Done()
-		ts.Stop()
-	}()
-
-	return d, nil
 }

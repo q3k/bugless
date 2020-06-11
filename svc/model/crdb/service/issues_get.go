@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"strconv"
@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *service) GetIssues(req *spb.ModelGetIssuesRequest, srv spb.Model_GetIssuesServer) error {
+func (s *Service) GetIssues(req *spb.ModelGetIssuesRequest, srv spb.Model_GetIssuesServer) error {
 	switch inner := req.Query.(type) {
 	case *spb.ModelGetIssuesRequest_ById_:
 		return s.getIssueById(inner.ById, srv)
@@ -25,7 +25,7 @@ func (s *service) GetIssues(req *spb.ModelGetIssuesRequest, srv spb.Model_GetIss
 	}
 }
 
-func (s *service) getIssueById(req *spb.ModelGetIssuesRequest_ById, srv spb.Model_GetIssuesServer) error {
+func (s *Service) getIssueById(req *spb.ModelGetIssuesRequest_ById, srv spb.Model_GetIssuesServer) error {
 	ctx := srv.Context()
 	issue, err := s.db.Do(ctx).Issue().Get(req.Id)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *service) getIssueById(req *spb.ModelGetIssuesRequest_ById, srv spb.Mode
 	})
 }
 
-func (s *service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, search *spb.ModelGetIssuesRequest_BySearch, srv spb.Model_GetIssuesServer) error {
+func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, search *spb.ModelGetIssuesRequest_BySearch, srv spb.Model_GetIssuesServer) error {
 	ctx := srv.Context()
 
 	search.Search = strings.TrimSpace(search.Search)

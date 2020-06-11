@@ -1,4 +1,4 @@
-package main
+package validation
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	spb "github.com/q3k/bugless/proto/svc"
 )
 
-func validateNewIssue(req *spb.ModelNewIssueRequest) error {
-	if err := validateUser(req.Author); err != nil {
+func NewIssue(req *spb.ModelNewIssueRequest) error {
+	if err := User(req.Author); err != nil {
 		return fmt.Errorf("author: %w", err)
 	}
 	if req.InitialState == nil {
@@ -20,28 +20,28 @@ func validateNewIssue(req *spb.ModelNewIssueRequest) error {
 		return fmt.Errorf("issue title must be set")
 	}
 	if s.Assignee != nil {
-		if err := validateUser(s.Assignee); err != nil {
+		if err := User(s.Assignee); err != nil {
 			return fmt.Errorf("assignee: %w", err)
 		}
 	}
 	for i, u := range s.Cc {
-		if err := validateUser(u); err != nil {
+		if err := User(u); err != nil {
 			return fmt.Errorf("assignee[%d]: %w", i, err)
 		}
 	}
-	if err := validateIssueType(s.Type); err != nil {
+	if err := IssueType(s.Type); err != nil {
 		return fmt.Errorf("type: %w", err)
 	}
-	if err := validateIssuePriority(s.Priority); err != nil {
+	if err := IssuePriority(s.Priority); err != nil {
 		return fmt.Errorf("priority: %w", err)
 	}
-	if err := validateIssueStatus(s.Status); err != nil {
+	if err := IssueStatus(s.Status); err != nil {
 		return fmt.Errorf("status: %w", err)
 	}
 	return nil
 }
 
-func validateUser(u *cpb.User) error {
+func User(u *cpb.User) error {
 	if u == nil {
 		return fmt.Errorf("must be set")
 	}
@@ -57,7 +57,7 @@ func validateUser(u *cpb.User) error {
 	return nil
 }
 
-func validateIssueType(t cpb.IssueType) error {
+func IssueType(t cpb.IssueType) error {
 	for _, v := range []cpb.IssueType{
 		cpb.IssueType_BUG,
 		cpb.IssueType_FEATURE_REQUEST,
@@ -73,14 +73,14 @@ func validateIssueType(t cpb.IssueType) error {
 	return fmt.Errorf("unsupported value %d", t)
 }
 
-func validateIssuePriority(p int64) error {
+func IssuePriority(p int64) error {
 	if p >= 0 && p <= 4 {
 		return nil
 	}
 	return fmt.Errorf("must be between P0 and P4")
 }
 
-func validateIssueStatus(s cpb.IssueStatus) error {
+func IssueStatus(s cpb.IssueStatus) error {
 	for _, v := range []cpb.IssueStatus{
 		cpb.IssueStatus_NEW,
 		cpb.IssueStatus_ASSIGNED,

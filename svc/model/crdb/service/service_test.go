@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func dutModel() (spb.ModelClient, context.CancelFunc) {
 	if err := d.Migrate(); err != nil {
 		panic(err)
 	}
-	spb.RegisterModelServer(s, &service{
+	spb.RegisterModelServer(s, &Service{
 		db: d,
 		l:  log.New("component", "service"),
 	})
