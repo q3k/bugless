@@ -21,7 +21,9 @@ go_library(
     srcs = [
         "crdb.go",
         "service.go",
+        "service_issue_updates.go",
         "service_issues.go",
+        "service_issues_get.go",
         "validation.go",
     ],
     importpath = "github.com/q3k/bugless/svc/model/crdb",
@@ -30,6 +32,7 @@ go_library(
         "//proto/common:go_default_library",
         "//proto/svc:go_default_library",
         "//svc/model/common:go_default_library",
+        "//svc/model/common/pagination:go_default_library",
         "//svc/model/crdb/db:go_default_library",
         "@com_github_cockroachdb_cockroach_go//testserver:go_default_library",
         "@com_github_inconshreveable_log15//:go_default_library",

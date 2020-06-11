@@ -9,7 +9,7 @@ import "proto/common/common.proto";
 
 service Model {
     // GetIssues returns requested issue(s) without their updates.
-    rpc GetIssues(ModelGetIssuesRequest) returns (stream common.Issue);
+    rpc GetIssues(ModelGetIssuesRequest) returns (stream ModelGetIssuesChunk);
     // GetIssueUpdates returns the update history of an issue.
     rpc GetIssueUpdates(ModelGetIssueUpdatesRequest) returns (stream ModelGetIssueUpdatesChunk);
     // NewIssue creates a new issue with an initial state and comment.
@@ -17,6 +17,11 @@ service Model {
     // UpdateIssues adds an update to an issue, adding to history and updating
     // the current state of the issue.
     rpc UpdateIssue(ModelUpdateIssueRequest) returns (ModelUpdateIssueResponse);
+}
+
+message PaginationSelector {
+    string after = 1;
+    int64 count = 2;
 }
 
 message ModelGetIssuesRequest {
@@ -34,14 +39,18 @@ message ModelGetIssuesRequest {
         BySearch by_search = 3;
     };
 
-    common.Timestamp after = 4;
-    int64 count = 5;
     enum OrderBy {
         ORDER_BY_INVALID = 0;
         ORDER_BY_CREATED = 1;
         ORDER_BY_LAST_UPDATE = 2;
     };
-    OrderBy order_by = 6;
+    OrderBy order_by = 4;
+
+    PaginationSelector pagination = 5;
+}
+
+message ModelGetIssuesChunk {
+    repeated common.Issue issues = 1;
 }
 
 message ModelGetIssueUpdatesRequest {
@@ -56,27 +65,14 @@ message ModelGetIssueUpdatesRequest {
     };
     Mode mode = 2;
 
-    // If set, only return updates newer than this timestamp.
-    common.Timestamp after = 3;
-    // If set, return at most these many updates. Otherwise, the service will
-    // an arbitrary number of updates.
-    int64 count = 4;
+    PaginationSelector pagination = 3;
 }
 
 message ModelGetIssueUpdatesChunk {
-    // Meta information about this response - update count statistics, etc.
-    // This will be set on the first stream chunk sent by the server, and
-    // not set in subsequent chunks.
-    message Metadata {
-        // Total update count for this issue, as of start of this stream.
-        int64 update_count = 1;
-    };
-    Metadata metadata = 1;
-
     // For the first chunk, the current issue state is returned, too.
-    common.Issue current = 2;
+    common.Issue current = 1;
 
-    repeated common.Update updates = 3;
+    repeated common.Update updates = 2;
 }
 
 message ModelNewIssueRequest {

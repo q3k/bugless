@@ -55,21 +55,25 @@ func TestIssueCreationSelectionStream(t *testing.T) {
 				Search: "author:test",
 			},
 		},
-		Count:   1337,
+		Pagination: &spb.PaginationSelector{
+			Count: 1337,
+		},
 		OrderBy: spb.ModelGetIssuesRequest_ORDER_BY_CREATED,
 	})
 	if err != nil {
 		t.Fatalf("GetIssues: %v", err)
 	}
 	for {
-		issue, err := srv.Recv()
+		chunk, err := srv.Recv()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			t.Fatalf("Recv: %v", err)
 		}
-		delete(want, issue.Id)
+		for _, issue := range chunk.Issues {
+			delete(want, issue.Id)
+		}
 	}
 	// Ensure all have been retrieved.
 	for id, need := range want {
@@ -122,9 +126,11 @@ func TestIssueUpdating(t *testing.T) {
 
 	// Retrieve all updates.
 	req2 := &spb.ModelGetIssueUpdatesRequest{
-		Id:    res.Id,
-		Mode:  spb.ModelGetIssueUpdatesRequest_MODE_STATUS_AND_UPDATES,
-		Count: 1337,
+		Id:   res.Id,
+		Mode: spb.ModelGetIssueUpdatesRequest_MODE_STATUS_AND_UPDATES,
+		Pagination: &spb.PaginationSelector{
+			Count: 1337,
+		},
 	}
 
 	srv, err := model.GetIssueUpdates(ctx, req2)
