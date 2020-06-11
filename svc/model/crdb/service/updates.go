@@ -42,9 +42,10 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 	if err := validation.User(req.Author); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "author: %v", err)
 	}
-	if req.New == nil {
-		return nil, status.Error(codes.InvalidArgument, "new state must be set")
+	if req.Diff == nil {
+		return nil, status.Error(codes.InvalidArgument, "diff must be set")
 	}
+	diff := req.Diff
 
 	update := &db.IssueUpdate{
 		IssueID: req.Id,
@@ -54,26 +55,25 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 		update.Comment.Valid = true
 		update.Comment.String = req.Comment
 	}
-	if req.New.Title != "" {
+	if diff.Title != nil {
 		update.Title.Valid = true
-		update.Title.String = req.New.Title
+		update.Title.String = diff.Title.Value
 	}
-	if req.New.Assignee != nil {
+	if diff.Assignee != nil {
 		update.Assignee.Valid = true
-		update.Assignee.String = req.New.Assignee.Id
+		update.Assignee.String = diff.Assignee.Value.Id
 	}
-	if validation.IssueType(req.New.Type) == nil {
+	if validation.IssueType(diff.Type) == nil {
 		update.Type.Valid = true
-		update.Type.Int64 = int64(req.New.Type)
+		update.Type.Int64 = int64(diff.Type)
 	}
-	// TODO(q3k): fix not being able to set P0, this requires a schema fix
-	if req.New.Priority > 0 && validation.IssuePriority(req.New.Priority) == nil {
+	if diff.Priority != nil && validation.IssuePriority(diff.Priority.Value) == nil {
 		update.Priority.Valid = true
-		update.Priority.Int64 = req.New.Priority
+		update.Priority.Int64 = diff.Priority.Value
 	}
-	if validation.IssueStatus(req.New.Status) == nil {
+	if validation.IssueStatus(diff.Status) == nil {
 		update.Status.Valid = true
-		update.Status.Int64 = int64(req.New.Status)
+		update.Status.Int64 = int64(diff.Status)
 	}
 
 	err := s.db.Do(ctx).Issue().Update(update)

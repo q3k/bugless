@@ -114,8 +114,8 @@ func TestIssueUpdating(t *testing.T) {
 			Id:      res.Id,
 			Author:  &cpb.User{Id: "test"},
 			Comment: updateComment(i),
-			New: &cpb.IssueState{
-				Title: updateTitle(i),
+			Diff: &cpb.IssueStateDiff{
+				Title: &cpb.IssueStateDiff_MaybeString{Value: updateTitle(i)},
 			},
 		}
 		_, err := model.UpdateIssue(ctx, req2)
@@ -149,7 +149,7 @@ func TestIssueUpdating(t *testing.T) {
 		}
 
 		for _, update := range chunk.Updates {
-			if want, got := updateTitle(i), update.State.Title; want != got {
+			if want, got := updateTitle(i), update.Diff.Title.Value; want != got {
 				t.Fatalf("update %d: wanted title %q, got %q", want, got)
 			}
 			if want, got := updateComment(i), update.Comment; want != got {

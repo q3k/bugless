@@ -34,8 +34,6 @@ message Issue {
 
 // IssueState is the denormalized state of an issue. This does not contain issue
 // invariants, like creation timestamp, author or ID.
-// These fields are either explicitely set or a figment of the imagination of the
-// current collapsed snapshot of an issue.
 message IssueState {
     string title = 1;
     User assignee = 2;
@@ -45,12 +43,42 @@ message IssueState {
     IssueStatus status = 6;
 }
 
+// Fields corresponding to IssueState, but made nullable where needed.  For
+// every Maybe field: if set, this update sets this issue's field to the inner
+// value, which can be an empty/null value (which in turn means 'this value was
+// cleared').
+message IssueStateDiff {
+    message MaybeString {
+        string value = 1;
+    }
+    message MaybeInt64 {
+        int64 value = 1;
+    }
+    message MaybeUser {
+        User value = 1;
+    }
+    message MaybeUsers {
+        repeated User values = 1;
+    }
+    MaybeString title = 4;
+    MaybeUser assignee = 5;
+    MaybeUser cc = 6;
+    // IssueType is not a Maybe type - instead, since it's an enum, we treat
+    // the INVALID value as 'not updated'. This works because these enums are
+    // not clearable.
+    IssueType type = 7;
+    MaybeInt64 priority = 8;
+    IssueStatus status = 9;
+}
+
 message Update {
     Timestamp created = 1;
     User author = 2;
 
+    // Comment attached to update, or empty string.
     string comment = 3;
-    IssueState state = 4;
+    // Updated fields of the issue.
+    IssueStateDiff diff = 4;
 }
 
 enum IssueType {

@@ -71,29 +71,30 @@ type IssueUpdate struct {
 }
 
 func (u *IssueUpdate) Proto() *cpb.Update {
-	state := &cpb.IssueState{}
-	if u.Title.Valid {
-		state.Title = u.Title.String
-	}
-	if u.Assignee.Valid {
-		state.Assignee = &cpb.User{Id: u.Assignee.String}
-	}
-	if u.Type.Valid {
-		state.Type = cpb.IssueType(u.Type.Int64)
-	}
-	if u.Priority.Valid {
-		state.Priority = u.Priority.Int64
-	}
-	if u.Status.Valid {
-		state.Status = cpb.IssueStatus(u.Status.Int64)
-	}
-
-	return &cpb.Update{
+	update := &cpb.Update{
 		Created: &cpb.Timestamp{Nanos: u.Created},
 		Author:  &cpb.User{Id: u.Author},
 		Comment: u.Comment.String,
-		State:   state,
+		Diff:    &cpb.IssueStateDiff{},
 	}
+
+	if u.Title.Valid {
+		update.Diff.Title = &cpb.IssueStateDiff_MaybeString{Value: u.Title.String}
+	}
+	if u.Assignee.Valid {
+		update.Diff.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: u.Assignee.String}}
+	}
+	if u.Type.Valid {
+		update.Diff.Type = cpb.IssueType(u.Type.Int64)
+	}
+	if u.Priority.Valid {
+		update.Diff.Priority = &cpb.IssueStateDiff_MaybeInt64{Value: u.Priority.Int64}
+	}
+	if u.Status.Valid {
+		update.Diff.Status = cpb.IssueStatus(u.Status.Int64)
+	}
+
+	return update
 }
 
 type IssueGetHistoryOpts struct {

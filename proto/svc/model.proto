@@ -94,7 +94,7 @@ message ModelUpdateIssueRequest {
     // Comment that accomapnies this update. Can be empty.
     string comment = 3;
     // The new data to set. All unset fields are not updated.
-    common.IssueState new = 4;
+    common.IssueStateDiff diff = 4;
 }
 
 message ModelUpdateIssueResponse {
