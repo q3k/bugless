@@ -6,8 +6,8 @@ import (
 
 	cpb "github.com/q3k/bugless/proto/common"
 	spb "github.com/q3k/bugless/proto/svc"
-	"github.com/q3k/bugless/svc/model/common"
 	"github.com/q3k/bugless/svc/model/common/pagination"
+	"github.com/q3k/bugless/svc/model/common/search"
 	"github.com/q3k/bugless/svc/model/crdb/db"
 
 	"google.golang.org/grpc/codes"
@@ -42,14 +42,14 @@ func (s *Service) getIssueById(req *spb.ModelGetIssuesRequest_ById, srv spb.Mode
 	})
 }
 
-func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, search *spb.ModelGetIssuesRequest_BySearch, srv spb.Model_GetIssuesServer) error {
+func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.ModelGetIssuesRequest_BySearch, srv spb.Model_GetIssuesServer) error {
 	ctx := srv.Context()
 
-	search.Search = strings.TrimSpace(search.Search)
-	if search.Search == "" {
+	reqs.Search = strings.TrimSpace(reqs.Search)
+	if reqs.Search == "" {
 		return status.Error(codes.InvalidArgument, "search must be set and non-empty")
 	}
-	q := common.ParseSearch(search.Search)
+	q := search.ParseSearch(reqs.Search)
 	s.l.Debug("query by search", "query", q)
 
 	// Try to parse ID, if given. Otherwise will be 0.
@@ -69,7 +69,7 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, search *spb.
 	filter := db.IssueFilter{
 		Author:   strings.ToLower(strings.TrimSpace(q.Author)),
 		Assignee: strings.ToLower(strings.TrimSpace(q.Assignee)),
-		Status:   int64(common.ParseIssueStatus(q.Status)),
+		Status:   int64(search.ParseIssueStatus(q.Status)),
 	}
 	if filter.Author == "" && filter.Assignee == "" && filter.Status == 0 {
 		return status.Error(codes.Unimplemented, "no keyword search implemented, use query filters")

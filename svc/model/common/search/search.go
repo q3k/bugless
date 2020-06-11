@@ -1,4 +1,4 @@
-package common
+package search
 
 import (
 	"strings"
@@ -21,11 +21,11 @@ import (
 //
 // TODO(q3k): define a formal grammar before doing any more work on this.
 
-// Search query is a parsed, but lightly typed search query from the user. It
+// Query is a parsed, but lightly typed search query from the user. It
 // is the result of a string-based query (like author:q3k foo status:bar).
 // All search string elements that could have been extracted end up in the
 // 'key' fields.
-type SearchQuery struct {
+type Query struct {
 	// Key fields. If set, the query selects that the given key must be set to
 	// its corresponding value.
 	ID       string
@@ -39,13 +39,13 @@ type SearchQuery struct {
 	OriginalQuery string
 }
 
-// ParseSearch parses the given string as a search query and returns a
-// SearchQuery object that is a semi-raw representation of the query: ie., with
-// fields names detected, but not type checked. The consumer of this type can
-// consume those values in a strict or fuzzy way depending on whether they are
-// valid or not.
-func ParseSearch(s string) *SearchQuery {
-	res := &SearchQuery{
+// ParseSearch parses the given string as a search query and returns a Query
+// object that is a semi-raw representation of the query: ie., with fields
+// names detected, but not type checked. The consumer of this type can consume
+// those values in a strict or fuzzy way depending on whether they are valid or
+// not.
+func ParseSearch(s string) *Query {
+	res := &Query{
 		OriginalQuery: s,
 	}
 

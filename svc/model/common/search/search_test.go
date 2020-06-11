@@ -1,11 +1,11 @@
-package common
+package search
 
 import (
 	"fmt"
 	"testing"
 )
 
-func (q *SearchQuery) diff(o *SearchQuery) string {
+func (q *Query) diff(o *Query) string {
 	if want, got := q.ID, o.ID; want != got {
 		return fmt.Sprintf("wanted ID %q, got %q", want, got)
 	}
@@ -33,18 +33,18 @@ func (q *SearchQuery) diff(o *SearchQuery) string {
 func TestParseSearch(t *testing.T) {
 	for i, te := range []struct {
 		s    string
-		want *SearchQuery
+		want *Query
 	}{
-		{"assignee:q3k status:assigned", &SearchQuery{
+		{"assignee:q3k status:assigned", &Query{
 			Assignee: "q3k", Status: "assigned",
 		}},
-		{"id:1234", &SearchQuery{
+		{"id:1234", &Query{
 			ID: "1234",
 		}},
-		{"bugless \"bug less\"", &SearchQuery{
+		{"bugless \"bug less\"", &Query{
 			Keywords: []string{"bugless", "bug less"},
 		}},
-		{"author:\"q3k@q3k.org\" \"foo bar\"", &SearchQuery{
+		{"author:\"q3k@q3k.org\" \"foo bar\"", &Query{
 			Author:   "q3k@q3k.org",
 			Keywords: []string{"foo bar"},
 		}},

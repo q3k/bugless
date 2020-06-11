@@ -13,8 +13,8 @@ go_library(
     deps = [
         "//proto/common:go_default_library",
         "//proto/svc:go_default_library",
-        "//svc/model/common:go_default_library",
         "//svc/model/common/pagination:go_default_library",
+        "//svc/model/common/search:go_default_library",
         "//svc/model/common/validation:go_default_library",
         "//svc/model/crdb/db:go_default_library",
         "@com_github_cockroachdb_cockroach_go//testserver:go_default_library",
