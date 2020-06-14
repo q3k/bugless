@@ -40,13 +40,17 @@ type Issue struct {
 }
 
 func (i *Issue) Proto() *cpb.Issue {
+	var assignee *cpb.User
+	if i.Assignee != "" {
+		assignee = &cpb.User{Id: i.Assignee}
+	}
 	return &cpb.Issue{
 		Id:      i.ID,
 		Created: &cpb.Timestamp{Nanos: i.Created},
 		Author:  &cpb.User{Id: i.Author},
 		Current: &cpb.IssueState{
 			Title:    i.Title,
-			Assignee: &cpb.User{Id: i.Assignee},
+			Assignee: assignee,
 			Type:     cpb.IssueType(i.Type),
 			// TODO(q3k): return CC list
 			Priority: i.Priority,

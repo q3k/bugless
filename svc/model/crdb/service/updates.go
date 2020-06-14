@@ -74,7 +74,9 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 	}
 	if diff.Assignee != nil {
 		update.Assignee.Valid = true
-		update.Assignee.String = diff.Assignee.Value.Id
+		if diff.Assignee.Value != nil {
+			update.Assignee.String = diff.Assignee.Value.Id
+		}
 	}
 	if validation.IssueType(diff.Type) == nil {
 		update.Type.Valid = true
@@ -96,35 +98,84 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 	return &spb.ModelUpdateIssueResponse{}, session.Commit()
 }
 
-// applyUpdateLogic applies checks to IssueStatus logic. Issue statuses are
-// tied to other fields: a NEW issue must be unassigned, every other one must
-// be assigned, and changing/setting the assignee must also change the status
-// to ASSIGNED.
+// applyUpdateLogic is a hairly ball of logic to ensure that issue states
+// respect some invariants. These invariants are currently defined to be:
+//  - an issue cannot be NEW and assigned to someone at the same time
+//  - an issue cannot be non-NEW and not assigned to anyone at the same time
+//  - an issue that was ACCEPTED and got reassigned without an explicit status
+//    change should get changed to ASSIGNED.
+//
 // This logic could be moved to the database (ie., denormalized where NEW and
 // ASSIGNED are the same state) - but we're keeping it in the application as it
 // might be customizable in the future.
+//
+// Alternatively, we could try to express this logic as (programmable?) issue
+// workflows/ lifecycles - but that's a large chunk of work that falls into the
+// category of general programmability of bugless, which is in turn part of a
+// larger discussion about the intended target and design of bugless. For now,
+// let's hardcode all of this and be done.
 func applyUpdateLogic(cur *cpb.IssueState, d *cpb.IssueStateDiff) {
+	// Simulate application of diff to current state.
+	new := *cur
+	if d.Title != nil {
+		new.Title = d.Title.Value
+	}
 	if d.Assignee != nil {
-		// If someone is being assigned, this might imply a state change.
-		user := d.Assignee.Value
-		if user == nil || user.Id == "" {
-			// Normalize empty users to unset users.
+		new.Assignee = d.Assignee.Value
+	}
+	if validation.IssueType(d.Type) == nil {
+		new.Type = d.Type
+	}
+	if d.Priority != nil && validation.IssuePriority(d.Priority.Value) == nil {
+		new.Priority = d.Priority.Value
+	}
+	if validation.IssueStatus(d.Status) == nil {
+		new.Status = d.Status
+	}
+
+	if new.Status == cpb.IssueStatus_NEW && new.Assignee != nil {
+		// Problem: an issue cannot be NEW and have someone assigned.
+
+		if d.Status == cpb.IssueStatus_NEW {
+			// If the NEW state is caused by the diff...
+			if d.Assignee != nil && cur.Assignee == nil {
+				// and the diff also assigns someone, remove the assignment.
+				d.Assignee = nil
+			} else {
+				// otherwise, force unassignment in diff (it means the issue
+				// was already assigned to someone).
+				d.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: nil}
+			}
+		} else if cur.Status == cpb.IssueStatus_NEW && d.Status == cpb.IssueStatus_ISSUE_STATUS_INVALID && d.Assignee != nil && d.Assignee.Value != nil {
+			// If the new diff tries to assign someone without changing the
+			// state to ASSIGNED, do that for them.
+			d.Status = cpb.IssueStatus_ASSIGNED
+		} else {
+			// Out of nice options for problem resolution: just force
+			// unassignment of user.
 			d.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: nil}
-			// The issue got deassigned - ensure the status is NEW.
+		}
+	} else if new.Status != cpb.IssueStatus_NEW && new.Assignee == nil {
+		// Problem: a non-NEW issue cannot be unassigned.
+
+		if cur.Status == cpb.IssueStatus_NEW && new.Status != cpb.IssueStatus_NEW {
+			// If the non-NEW status is caused by the diff...
+			if cur.Assignee != nil && d.Assignee != nil {
+				// and the diff also caused the unassign, remove the unassign.
+				d.Assignee = nil
+			} else {
+				// otherwise, nuke the change to non-NEW, as we don't know
+				// who to assign to.
+				d.Status = cpb.IssueStatus_ISSUE_STATUS_INVALID
+			}
+		} else if cur.Assignee != nil && new.Assignee == nil {
+			// If unassignment is caused by the diff, move the issue to NEW status.
 			d.Status = cpb.IssueStatus_NEW
 		} else {
-			// Someone got assigned - ensure the new status is ASSIGNED.
-			d.Status = cpb.IssueStatus_ASSIGNED
-		}
-	} else if validation.IssueStatus(d.Status) == nil {
-		// Make sure {NEW,!NEW} issues are unassigned and assigned respectively.
-		if d.Status == cpb.IssueStatus_NEW {
-			// New issues cannot be assigned to anyone.
+			// Out of nice options for problem resolution: force NEW status
+			// and unassignment.
+			d.Status = cpb.IssueStatus_NEW
 			d.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: nil}
-		} else if cur.Assignee == nil && d.Assignee == nil {
-			// All other states require a set assignee. If that's not the case,
-			// drop the update.
-			d.Status = cpb.IssueStatus_ISSUE_STATUS_INVALID
 		}
 	}
 }
