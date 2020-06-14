@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	cpb "github.com/q3k/bugless/proto/common"
 	spb "github.com/q3k/bugless/proto/svc"
 	"github.com/q3k/bugless/svc/model/common/pagination"
 	"github.com/q3k/bugless/svc/model/common/validation"
@@ -47,6 +48,18 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 	}
 	diff := req.Diff
 
+	session := s.db.Begin(ctx)
+	defer session.Rollback()
+
+	// This is somewhat ugly - but in order to check some of the update logic,
+	// we need to actually retrieve the current state of the issue.
+	issue, err := session.Issue().Get(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	applyUpdateLogic(issue.Proto().Current, diff)
+
 	update := &db.IssueUpdate{
 		IssueID: req.Id,
 		Author:  req.Author.Id,
@@ -76,9 +89,42 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 		update.Status.Int64 = int64(diff.Status)
 	}
 
-	err := s.db.Do(ctx).Issue().Update(update)
+	err = session.Issue().Update(update)
 	if err != nil {
 		return nil, err
 	}
-	return &spb.ModelUpdateIssueResponse{}, nil
+	return &spb.ModelUpdateIssueResponse{}, session.Commit()
+}
+
+// applyUpdateLogic applies checks to IssueStatus logic. Issue statuses are
+// tied to other fields: a NEW issue must be unassigned, every other one must
+// be assigned, and changing/setting the assignee must also change the status
+// to ASSIGNED.
+// This logic could be moved to the database (ie., denormalized where NEW and
+// ASSIGNED are the same state) - but we're keeping it in the application as it
+// might be customizable in the future.
+func applyUpdateLogic(cur *cpb.IssueState, d *cpb.IssueStateDiff) {
+	if d.Assignee != nil {
+		// If someone is being assigned, this might imply a state change.
+		user := d.Assignee.Value
+		if user == nil || user.Id == "" {
+			// Normalize empty users to unset users.
+			d.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: nil}
+			// The issue got deassigned - ensure the status is NEW.
+			d.Status = cpb.IssueStatus_NEW
+		} else {
+			// Someone got assigned - ensure the new status is ASSIGNED.
+			d.Status = cpb.IssueStatus_ASSIGNED
+		}
+	} else if validation.IssueStatus(d.Status) == nil {
+		// Make sure {NEW,!NEW} issues are unassigned and assigned respectively.
+		if d.Status == cpb.IssueStatus_NEW {
+			// New issues cannot be assigned to anyone.
+			d.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: nil}
+		} else if cur.Assignee == nil && d.Assignee == nil {
+			// All other states require a set assignee. If that's not the case,
+			// drop the update.
+			d.Status = cpb.IssueStatus_ISSUE_STATUS_INVALID
+		}
+	}
 }
