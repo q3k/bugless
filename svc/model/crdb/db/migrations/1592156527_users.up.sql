@@ -1,8 +1,15 @@
 -- Copyright 2020 Sergiusz Bazanski <q3k@q3k.org>
 -- SPDX-License-Identifier: AGPL-3.0-or-later
 
--- This migration is the first step of a two-step migration, the second step
--- being 1592159036.
+-- This migration adds the 'users' table and changes all user columns in
+-- existing tables to be a foreign key to the new table.
+-- If this was a real migration in a released version of Bugless, it would've
+-- been multi-stage, in lockstep with the application to create user objects.
+-- However, this is a lot of wasted effort since Bugless hasn't haf a single
+-- release yet (and as per the README at the time of writing, no stability is
+-- guaranteed), so we just drop all data instead
+-- To reiterate in caps, THIS EATS YOUR DATA. If for some reason you're already
+-- holding important data in Bugless - god help you.
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,20 +42,31 @@ VALUES (
     '', ''
 );
 
+-- Nuke existing data, as per header.
+DELETE FROM issues;
+DELETE FROM issue_updates;
+
 ALTER TABLE issues
-    ADD COLUMN author_id UUID,
-    ADD COLUMN assignee_id UUID;
+    DROP COLUMN author,
+    DROP COLUMN assignee,
+    ADD COLUMN author_id UUID NOT NULL,
+    ADD COLUMN assignee_id UUID NOT NULL,
+    ADD CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES users (id),
+    ADD CONSTRAINT fk_assignee FOREIGN KEY (assignee_id) REFERENCES users (id);
 
 ALTER TABLE issue_updates
-    ADD COLUMN author_id UUID,
-    ADD COLUMN assignee_id UUID;
+    DROP COLUMN author,
+    DROP COLUMN assignee,
+    ADD COLUMN author_id UUID NOT NULL,
+    ADD COLUMN assignee_id UUID,
+    ADD CONSTRAINT fk_assignee FOREIGN KEY (assignee_id) REFERENCES users (id),
+    ADD CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES users (id);
 
 -- issue_{update_,}cc_lists are unused by code at this point - just nuke all
 -- and recreate.
 DROP TABLE issue_cc_lists;
 DROP TABLE issue_update_cc_lists;
 
--- Issue CC lists.
 CREATE TABLE issue_cc_lists (
     issue_id INT8 NOT NULL,
 
