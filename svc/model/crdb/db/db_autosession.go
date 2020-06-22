@@ -17,6 +17,10 @@ func (a *autoSession) Issue() IssueGetter {
 	return &autoSessionIssue{a}
 }
 
+func (a *autoSession) User() UserGetter {
+	return &autoSessionUser{a}
+}
+
 func (a *autoSession) Commit() error {
 	panic("autoSession (from db.Database.Do) cannot be commited!")
 }
@@ -30,6 +34,10 @@ type autoSessionCategory struct {
 }
 
 type autoSessionIssue struct {
+	*autoSession
+}
+
+type autoSessionUser struct {
 	*autoSession
 }
 
@@ -134,4 +142,34 @@ func (c *autoSessionIssue) Update(update *IssueUpdate) error {
 		return err
 	}
 	return s.Commit()
+}
+
+func (c *autoSessionUser) New(new *User) (*User, error) {
+	s := c.db.Begin(c.ctx)
+	user, err := s.User().New(new)
+	if err != nil {
+		s.Rollback()
+		return nil, err
+	}
+	return user, s.Commit()
+}
+
+func (c *autoSessionUser) ResolveUsername(username string) (string, error) {
+	s := c.db.Begin(c.ctx)
+	id, err := s.User().ResolveUsername(username)
+	if err != nil {
+		s.Rollback()
+		return "", err
+	}
+	return id, s.Commit()
+}
+
+func (c *autoSessionUser) Get(id string) (*User, error) {
+	s := c.db.Begin(c.ctx)
+	user, err := s.User().Get(id)
+	if err != nil {
+		s.Rollback()
+		return nil, err
+	}
+	return user, s.Commit()
 }

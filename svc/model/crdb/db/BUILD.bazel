@@ -8,6 +8,7 @@ go_library(
         "db_category.go",
         "db_errors.go",
         "db_issue.go",
+        "db_users.go",
     ],
     importpath = "github.com/q3k/bugless/svc/model/crdb/db",
     visibility = ["//visibility:public"],

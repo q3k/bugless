@@ -13,14 +13,14 @@ import (
 func TestIssueCreationSelectionStream(t *testing.T) {
 	ctx := context.Background()
 
-	model, cancel := dutModel()
+	model, users, cancel := dutModel()
 	defer cancel()
 
 	// Make a thousand (rounded up) issues.
 	issueIds := []int64{}
 	for i := 0; i < 1337; i++ {
 		req := &spb.ModelNewIssueRequest{
-			Author: &cpb.User{Id: "test"},
+			Author: users["implr"],
 			InitialState: &cpb.IssueState{
 				Title:    fmt.Sprintf("test issue %d", i),
 				Type:     cpb.IssueType_BUG,
@@ -52,7 +52,7 @@ func TestIssueCreationSelectionStream(t *testing.T) {
 	srv, err := model.GetIssues(ctx, &spb.ModelGetIssuesRequest{
 		Query: &spb.ModelGetIssuesRequest_BySearch_{
 			BySearch: &spb.ModelGetIssuesRequest_BySearch{
-				Search: "author:test",
+				Search: "author:implr",
 			},
 		},
 		Pagination: &spb.PaginationSelector{
@@ -87,12 +87,12 @@ func TestIssueCreationSelectionStream(t *testing.T) {
 func TestIssueUpdating(t *testing.T) {
 	ctx := context.Background()
 
-	model, cancel := dutModel()
+	model, users, cancel := dutModel()
 	defer cancel()
 
 	// Create an issue.
 	req := &spb.ModelNewIssueRequest{
-		Author: &cpb.User{Id: "test"},
+		Author: users["implr"],
 		InitialState: &cpb.IssueState{
 			Title:    "test issue",
 			Type:     cpb.IssueType_BUG,
@@ -112,7 +112,7 @@ func TestIssueUpdating(t *testing.T) {
 	for i := 0; i < 1337; i++ {
 		req2 := &spb.ModelUpdateIssueRequest{
 			Id:      res.Id,
-			Author:  &cpb.User{Id: "test"},
+			Author:  users["implr"],
 			Comment: updateComment(i),
 			Diff: &cpb.IssueStateDiff{
 				Title: &cpb.IssueStateDiff_MaybeString{Value: updateTitle(i)},

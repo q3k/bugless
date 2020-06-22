@@ -24,30 +24,30 @@ var (
 
 type Issue struct {
 	// Constant columns
-	ID      int64  `db:"id"`
-	Author  string `db:"author"`
-	Created int64  `db:"created"`
+	ID       int64  `db:"id"`
+	AuthorID string `db:"author_id"`
+	Created  int64  `db:"created"`
 
 	// Bumped when a new update is added
 	LastUpdated int64 `db:"last_updated"`
 
 	// Denormalized data
-	Title    string `db:"title"`
-	Assignee string `db:"assignee"`
-	Type     int64  `db:"type"`
-	Priority int64  `db:"priority"`
-	Status   int64  `db:"status"`
+	Title      string `db:"title"`
+	AssigneeID string `db:"assignee_id"`
+	Type       int64  `db:"type"`
+	Priority   int64  `db:"priority"`
+	Status     int64  `db:"status"`
 }
 
 func (i *Issue) Proto() *cpb.Issue {
-	var assignee *cpb.User
-	if i.Assignee != "" {
-		assignee = &cpb.User{Id: i.Assignee}
+	assignee := &cpb.User{Id: i.AssigneeID}
+	if assignee.Id == UnassignedUUID {
+		assignee = nil
 	}
 	return &cpb.Issue{
 		Id:      i.ID,
 		Created: &cpb.Timestamp{Nanos: i.Created},
-		Author:  &cpb.User{Id: i.Author},
+		Author:  &cpb.User{Id: i.AuthorID},
 		Current: &cpb.IssueState{
 			Title:    i.Title,
 			Assignee: assignee,
@@ -60,24 +60,45 @@ func (i *Issue) Proto() *cpb.Issue {
 	}
 }
 
+// ProtoWithUsers returns a proto representation of the Issue database object
+// like .Proto, but with full user data. If an error is returned, the .Proto
+// result is returned (without full user data) alongside the error.
+func (i *Issue) ProtoWithUsers(s Session) (*cpb.Issue, error) {
+	p := i.Proto()
+	author, err := s.User().Get(i.AuthorID)
+	if err != nil {
+		return p, err
+	}
+	p.Author = author.Proto()
+	if p.Current.Assignee != nil {
+		assignee, err := s.User().Get(p.Current.Assignee.Id)
+		if err != nil {
+			return p, err
+		}
+		p.Current.Assignee = assignee.Proto()
+	}
+
+	return p, nil
+}
+
 type IssueUpdate struct {
 	IssueID  int64          `db:"issue_id"`
 	UpdateID int64          `db:"id"`
 	Created  int64          `db:"created"`
-	Author   string         `db:"author"`
+	AuthorID string         `db:"author_id"`
 	Comment  sql.NullString `db:"comment"`
 
-	Title    sql.NullString `db:"title"`
-	Assignee sql.NullString `db:"assignee"`
-	Type     sql.NullInt64  `db:"type"`
-	Priority sql.NullInt64  `db:"priority"`
-	Status   sql.NullInt64  `db:"status"`
+	Title      sql.NullString `db:"title"`
+	AssigneeID sql.NullString `db:"assignee_id"`
+	Type       sql.NullInt64  `db:"type"`
+	Priority   sql.NullInt64  `db:"priority"`
+	Status     sql.NullInt64  `db:"status"`
 }
 
 func (u *IssueUpdate) Proto() *cpb.Update {
 	update := &cpb.Update{
 		Created: &cpb.Timestamp{Nanos: u.Created},
-		Author:  &cpb.User{Id: u.Author},
+		Author:  &cpb.User{Id: u.AuthorID},
 		Comment: u.Comment.String,
 		Diff:    &cpb.IssueStateDiff{},
 	}
@@ -85,8 +106,12 @@ func (u *IssueUpdate) Proto() *cpb.Update {
 	if u.Title.Valid {
 		update.Diff.Title = &cpb.IssueStateDiff_MaybeString{Value: u.Title.String}
 	}
-	if u.Assignee.Valid {
-		update.Diff.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: u.Assignee.String}}
+	if u.AssigneeID.Valid {
+		if u.AssigneeID.String == UnassignedUUID {
+			update.Diff.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: nil}
+		} else {
+			update.Diff.Assignee = &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: u.AssigneeID.String}}
+		}
 	}
 	if u.Type.Valid {
 		update.Diff.Type = cpb.IssueType(u.Type.Int64)
@@ -99,6 +124,24 @@ func (u *IssueUpdate) Proto() *cpb.Update {
 	}
 
 	return update
+}
+
+func (u *IssueUpdate) ProtoWithUsers(s Session) (*cpb.Update, error) {
+	p := u.Proto()
+	author, err := s.User().Get(u.AuthorID)
+	if err != nil {
+		return p, err
+	}
+	p.Author = author.Proto()
+	if u.AssigneeID.Valid && u.AssigneeID.String != UnassignedUUID {
+		assignee, err := s.User().Get(u.AssigneeID.String)
+		if err != nil {
+			return p, err
+		}
+		p.Diff.Assignee.Value = assignee.Proto()
+	}
+
+	return p, nil
 }
 
 type IssueGetHistoryOpts struct {
@@ -150,12 +193,12 @@ func (d *databaseIssue) Get(id int64) (*Issue, error) {
 	q := `
 		SELECT
 			issues.id AS id,
-			issues.author AS author,
+			issues.author_id AS author_id,
 			issues.created AS created,
 			issues.last_updated AS last_updated,
 
 			issues.title AS title,
-			issues.assignee AS assignee,
+			issues.assignee_id AS assignee_id,
 			issues."type" AS "type",
 			issues.priority AS priority,
 			issues.status AS status
@@ -183,10 +226,10 @@ func (d *databaseIssue) GetHistory(id int64, opts *IssueGetHistoryOpts) ([]*Issu
 		SELECT
 			issue_updates.id AS id,
 			issue_updates.created AS created,
-			issue_updates.author AS author,
+			issue_updates.author_id AS author_id,
 			issue_updates.comment AS comment,
 			issue_updates.title AS title,
-			issue_updates.assignee AS assignee,
+			issue_updates.assignee_id AS assignee_id,
 			issue_updates.type AS type,
 			issue_updates.priority AS priority,
 			issue_updates.status AS status
@@ -219,12 +262,12 @@ func (d *databaseIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *Iss
 	q := `
 		SELECT
 			issues.id AS id,
-			issues.author AS author,
+			issues.author_id AS author_id,
 			issues.created AS created,
 			issues.last_updated AS last_updated,
 
 			issues.title AS title,
-			issues.assignee AS assignee,
+			issues.assignee_id AS assignee_id,
 			issues."type" AS "type",
 			issues.priority AS priority,
 			issues.status AS status
@@ -236,11 +279,11 @@ func (d *databaseIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *Iss
 	var parameters []interface{}
 	if filter.Author != "" {
 		parameters = append(parameters, filter.Author)
-		conditions = append(conditions, fmt.Sprintf("issues.author = $%d", len(parameters)))
+		conditions = append(conditions, fmt.Sprintf("issues.author_id = $%d", len(parameters)))
 	}
 	if filter.Assignee != "" {
 		parameters = append(parameters, filter.Assignee)
-		conditions = append(conditions, fmt.Sprintf("issues.assignee = $%d", len(parameters)))
+		conditions = append(conditions, fmt.Sprintf("issues.assignee_id = $%d", len(parameters)))
 	}
 	if filter.Status != 0 {
 		parameters = append(parameters, filter.Status)
@@ -290,7 +333,8 @@ func (d *databaseIssue) Filter(filter IssueFilter, order IssueOrderBy, opts *Iss
 	}
 
 	var data []*Issue
-	conv := NewErrorConverter()
+	conv := NewErrorConverter().
+		WithSyntaxError(UserErrorNoSuchUsername)
 	err := d.tx.SelectContext(d.ctx, &data, q, parameters...)
 	if err != nil {
 		return nil, conv.Convert(err)
@@ -314,14 +358,18 @@ func (d *databaseIssue) New(new *Issue) (*Issue, error) {
 	conv := NewErrorConverter()
 	q := `
 		INSERT INTO issues
-			(author, created, last_updated,
-			 title, assignee, "type", priority, status)
+			(author_id, created, last_updated,
+			 title, assignee_id, "type", priority, status)
 		VALUES
-			(:author, :created, :last_updated,
-			 :title, :assignee, :type, :priority, :status)
+			(:author_id, :created, :last_updated,
+			 :title, :assignee_id, :type, :priority, :status)
 		RETURNING id
 	`
 	data := *new
+	if data.AssigneeID == "" {
+		data.AssigneeID = UnassignedUUID
+	}
+
 	rows, err := d.tx.NamedQuery(q, &data)
 	if err != nil {
 		return nil, conv.Convert(err)
@@ -346,31 +394,36 @@ func (d *databaseIssue) New(new *Issue) (*Issue, error) {
 
 func (d *databaseIssue) Update(update *IssueUpdate) error {
 	conv := NewErrorConverter()
-
 	now := time.Now().UnixNano()
+
+	data := *update
+	data.Created = now
+	if data.AssigneeID.Valid && data.AssigneeID.String == "" {
+		data.AssigneeID.String = UnassignedUUID
+	}
 
 	updates := []string{"last_updated"}
 	args := []interface{}{now}
 
-	if update.Title.Valid {
+	if data.Title.Valid {
 		updates = append(updates, "title")
-		args = append(args, update.Title.String)
+		args = append(args, data.Title.String)
 	}
-	if update.Assignee.Valid {
-		updates = append(updates, "assignee")
-		args = append(args, update.Assignee.String)
+	if data.AssigneeID.Valid {
+		updates = append(updates, "assignee_id")
+		args = append(args, data.AssigneeID)
 	}
-	if update.Type.Valid {
+	if data.Type.Valid {
 		updates = append(updates, "type")
-		args = append(args, update.Type.Int64)
+		args = append(args, data.Type.Int64)
 	}
-	if update.Priority.Valid {
+	if data.Priority.Valid {
 		updates = append(updates, "priority")
-		args = append(args, update.Priority.Int64)
+		args = append(args, data.Priority.Int64)
 	}
-	if update.Status.Valid {
+	if data.Status.Valid {
 		updates = append(updates, "status")
-		args = append(args, update.Status.Int64)
+		args = append(args, data.Status.Int64)
 	}
 
 	var updateStrings []string
@@ -384,7 +437,9 @@ func (d *databaseIssue) Update(update *IssueUpdate) error {
 			`
 	q += strings.Join(updateStrings, ", ")
 	q += fmt.Sprintf(" WHERE id = $%d", len(args)+1)
-	args = append(args, update.IssueID)
+	fmt.Println(q)
+	fmt.Println(args)
+	args = append(args, data.IssueID)
 	_, err := d.tx.Exec(q, args...)
 	if err != nil {
 		return conv.Convert(err)
@@ -392,19 +447,17 @@ func (d *databaseIssue) Update(update *IssueUpdate) error {
 
 	q = `
 		INSERT INTO issue_updates
-			(issue_id, created, author, comment,
-			 title, assignee, type, priority, status,
+			(issue_id, created, author_id, comment,
+			 title, assignee_id, type, priority, status,
 			 id)
 		VALUES
-			(:issue_id, :created, :author, :comment,
-			 :title, :assignee, :type, :priority, :status,
+			(:issue_id, :created, :author_id, :comment,
+			 :title, :assignee_id, :type, :priority, :status,
 			 (
 			   SELECT COUNT(*)+1 from issue_updates where issue_id = :issue_id
 			 )
 			)
 	`
-	data := *update
-	data.Created = now
 	_, err = d.tx.NamedExec(q, &data)
 	if err != nil {
 		return conv.Convert(err)

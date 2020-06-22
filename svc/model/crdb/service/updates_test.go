@@ -103,7 +103,7 @@ func TestUpdateLogic(t *testing.T) {
 func TestUpdateCompaction(t *testing.T) {
 	ctx := context.Background()
 
-	model, cancel := dutModel()
+	model, users, cancel := dutModel()
 	defer cancel()
 
 	for i, te := range []struct {
@@ -137,14 +137,14 @@ func TestUpdateCompaction(t *testing.T) {
 				Status:   cpb.IssueStatus_NEW,
 			},
 			[]*cpb.IssueStateDiff{
-				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: "q3k"}}},
+				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: users["q3k"]}},
 			},
 			&cpb.IssueState{
 				Title:    "foo",
 				Type:     cpb.IssueType_BUG,
 				Priority: 2,
 				Status:   cpb.IssueStatus_ASSIGNED,
-				Assignee: &cpb.User{Id: "q3k"},
+				Assignee: users["q3k"],
 			},
 		},
 
@@ -155,7 +155,7 @@ func TestUpdateCompaction(t *testing.T) {
 				Type:     cpb.IssueType_BUG,
 				Priority: 2,
 				Status:   cpb.IssueStatus_ASSIGNED,
-				Assignee: &cpb.User{Id: "q3k"},
+				Assignee: users["q3k"],
 			},
 			[]*cpb.IssueStateDiff{
 				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: nil}},
@@ -185,7 +185,7 @@ func TestUpdateCompaction(t *testing.T) {
 				},
 
 				// q3k fixes it.
-				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: "q3k"}}},
+				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: users["q3k"]}},
 				{Status: cpb.IssueStatus_ACCEPTED},
 				{Status: cpb.IssueStatus_FIXED},
 
@@ -193,11 +193,11 @@ func TestUpdateCompaction(t *testing.T) {
 				{Status: cpb.IssueStatus_NEW},
 
 				// q3k re-fixes it
-				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: "q3k"}}},
+				{Assignee: &cpb.IssueStateDiff_MaybeUser{Value: users["q3k"]}},
 				{Status: cpb.IssueStatus_ACCEPTED},
 				{
 					Status:   cpb.IssueStatus_FIXED,
-					Assignee: &cpb.IssueStateDiff_MaybeUser{Value: &cpb.User{Id: "implr"}},
+					Assignee: &cpb.IssueStateDiff_MaybeUser{Value: users["implr"]},
 				},
 				// implr verifies it
 				{Status: cpb.IssueStatus_FIXED_VERIFIED},
@@ -207,12 +207,12 @@ func TestUpdateCompaction(t *testing.T) {
 				Type:     cpb.IssueType_BUG,
 				Priority: 1,
 				Status:   cpb.IssueStatus_FIXED_VERIFIED,
-				Assignee: &cpb.User{Id: "implr"},
+				Assignee: users["implr"],
 			},
 		},
 	} {
 		issueReq := &spb.ModelNewIssueRequest{
-			Author:       &cpb.User{Id: "test"},
+			Author:       users["q3k"],
 			InitialState: te.start,
 		}
 		issue, err := model.NewIssue(ctx, issueReq)
@@ -223,7 +223,7 @@ func TestUpdateCompaction(t *testing.T) {
 		for j, update := range te.updates {
 			updateReq := &spb.ModelUpdateIssueRequest{
 				Id:     issue.Id,
-				Author: &cpb.User{Id: "test"},
+				Author: users["q3k"],
 				Diff:   update,
 			}
 			_, err := model.UpdateIssue(ctx, updateReq)

@@ -32,9 +32,10 @@ func (s *Service) getIssueById(req *spb.ModelGetIssuesRequest_ById, srv spb.Mode
 		return err
 	}
 
-	issueProto := issue.Proto()
-	if issueProto == nil {
-		return status.Error(codes.Internal, "database entry for issue could not be parsed")
+	issueProto, err := issue.ProtoWithUsers(s.db.Do(ctx))
+	if err != nil {
+		s.l.Error("ProtoWithUsers failed", "err", err)
+		return status.Error(codes.Internal, "could not retrieve user data")
 	}
 
 	return srv.Send(&spb.ModelGetIssuesChunk{
@@ -66,9 +67,31 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 		return s.getIssueById(&spb.ModelGetIssuesRequest_ById{Id: id}, srv)
 	}
 
+	var err error
+
+	author := strings.ToLower(strings.TrimSpace(q.Author))
+	authorID := ""
+	// TODO(q3k): bubble up these errors to the RPC caller
+	// TODO(q3k): cache these lookups
+	if author != "" {
+		authorID, err = s.db.Do(ctx).User().ResolveUsername(author)
+		if err != nil && err != db.UserErrorNoSuchUsername {
+			s.l.Error("ResolveUser failed", "username", author, "err", err)
+		}
+	}
+
+	assignee := strings.ToLower(strings.TrimSpace(q.Assignee))
+	assigneeID := ""
+	if assignee != "" {
+		assigneeID, err = s.db.Do(ctx).User().ResolveUsername(assignee)
+		if err != nil && err != db.UserErrorNoSuchUsername {
+			s.l.Error("ResolveUser failed", "username", author, "err", err)
+		}
+	}
+
 	filter := db.IssueFilter{
-		Author:   strings.ToLower(strings.TrimSpace(q.Author)),
-		Assignee: strings.ToLower(strings.TrimSpace(q.Assignee)),
+		Author:   authorID,
+		Assignee: assigneeID,
 		Status:   int64(search.ParseIssueStatus(q.Status)),
 	}
 	if filter.Author == "" && filter.Assignee == "" && filter.Status == 0 {
@@ -96,8 +119,9 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 
 		chunk := &spb.ModelGetIssuesChunk{}
 		for _, issue := range issues {
-			ip := issue.Proto()
-			if ip == nil {
+			ip, err := issue.ProtoWithUsers(s.db.Do(ctx))
+			if err != nil {
+				s.l.Error("ProtoWithUsers failed", "err", err)
 				return 0, start, status.Error(codes.Internal, "database entry for issue could not be parsed")
 			}
 			chunk.Issues = append(chunk.Issues, ip)

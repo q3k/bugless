@@ -11,8 +11,21 @@ message Timestamp {
 }
 
 message User {
-    // Unqiue, opaque user identifier.
+    // Unqiue, opaque user identifier. This ID should not be visible to the
+    // end-user (but is not secret).
+    // For all incoming requests, if this field is set, it overrides the
+    // username set below. If not set, username must be set, and will be
+    // resolved by the system to the appropriate internal ID.
+    // For all outgoing data, both this field and username will be set. The
+    // API consumer should present 'username' to end-users, but use this field
+    // for any long-term stored data about a user.
     string id = 1;
+
+    // Main, externally-visible identifier. This has to be [a-z0-9\-_@.+]+.
+    // For example, this can be an IdP username, or full email. This can change
+    // as a user chosses to change their username - so no external system
+    // should key data on this, and instead, should depend on the id above.
+    string username = 2;
 }
 
 message Issue {

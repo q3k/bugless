@@ -21,12 +21,12 @@ func TestIssuesCRUD(t *testing.T) {
 
 	// Issue creation happy path
 	issue, err := s.Issue().New(&Issue{
-		Author:   "q3k",
-		Title:    "test issue",
-		Assignee: "implr",
-		Type:     1,
-		Priority: 3,
-		Status:   2,
+		AuthorID:   testUsers["q3k"],
+		Title:      "test issue",
+		AssigneeID: testUsers["implr"],
+		Type:       1,
+		Priority:   3,
+		Status:     2,
 	})
 	if err != nil {
 		t.Fatalf("Issue.New(okay): wanted nil, got %v", err)
@@ -41,14 +41,14 @@ func TestIssuesCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Issue.Get(%d): wanted nil, got %v", id, err)
 	}
-	if want, got := "q3k", issue.Author; want != got {
-		t.Errorf("issue.Author is %q, want %q", want, got)
+	if want, got := testUsers["q3k"], issue.AuthorID; want != got {
+		t.Errorf("issue.AuthorID is %q, want %q", want, got)
 	}
 	if want, got := "test issue", issue.Title; want != got {
 		t.Errorf("issue.Title is %q, want %q", want, got)
 	}
-	if want, got := "implr", issue.Assignee; want != got {
-		t.Errorf("issue.Assignee is %q, want %q", want, got)
+	if want, got := testUsers["implr"], issue.AssigneeID; want != got {
+		t.Errorf("issue.AssigneeID is %q, want %q", want, got)
 	}
 	if want, got := int64(1), issue.Type; want != got {
 		t.Errorf("issue.Type is %d, want %d", want, got)
@@ -69,12 +69,12 @@ func TestIssueUpdates(t *testing.T) {
 	s := db.Do(ctx)
 
 	issue, err := s.Issue().New(&Issue{
-		Author:   "q3k",
-		Title:    "test issue",
-		Assignee: "implr",
-		Type:     1,
-		Priority: 3,
-		Status:   2,
+		AuthorID:   testUsers["q3k"],
+		Title:      "test issue",
+		AssigneeID: testUsers["implr"],
+		Type:       1,
+		Priority:   3,
+		Status:     2,
 	})
 	if err != nil {
 		t.Fatalf("Issue.New(okay): wanted nil, got %v", err)
@@ -82,9 +82,9 @@ func TestIssueUpdates(t *testing.T) {
 	id := issue.ID
 
 	err = s.Issue().Update(&IssueUpdate{
-		IssueID: id,
-		Author:  "q3k",
-		Title:   sql.NullString{"better issue", true},
+		IssueID:  id,
+		AuthorID: testUsers["q3k"],
+		Title:    sql.NullString{"better issue", true},
 	})
 	if err != nil {
 		t.Fatalf("Issue.Update(title: 'better issue'): wanted nil, got %v", err)
@@ -108,12 +108,12 @@ func TestIssueHistory(t *testing.T) {
 	s := db.Do(ctx)
 
 	issue, err := s.Issue().New(&Issue{
-		Author:   "q3k",
-		Title:    "test issue",
-		Assignee: "implr",
-		Type:     1,
-		Priority: 3,
-		Status:   2,
+		AuthorID:   testUsers["q3k"],
+		Title:      "test issue",
+		AssigneeID: testUsers["implr"],
+		Type:       1,
+		Priority:   3,
+		Status:     2,
 	})
 	if err != nil {
 		t.Fatalf("Issue.New(okay): wanted nil, got %v", err)
@@ -125,19 +125,19 @@ func TestIssueHistory(t *testing.T) {
 		assignee string
 	}{
 		{"test issue - foo", ""},
-		{"test issue - foo", "foo"},
-		{"", "q3k"},
+		{"test issue - foo", testUsers["q3k"]},
+		{"", testUsers["implr"]},
 		{"test issue - bar", ""},
 		{"test issue - bar", ""},
 		{"test issue - baz", ""},
 		{"test issue - barfoo", ""},
 	} {
-		u := &IssueUpdate{IssueID: issue.ID}
+		u := &IssueUpdate{IssueID: issue.ID, AuthorID: testUsers["q3k"]}
 		if test.title != "" {
 			u.Title = sql.NullString{test.title, true}
 		}
 		if test.assignee != "" {
-			u.Assignee = sql.NullString{test.assignee, true}
+			u.AssigneeID = sql.NullString{test.assignee, true}
 		}
 		err := s.Issue().Update(u)
 		if err != nil {
@@ -160,7 +160,7 @@ func TestIssueHistory(t *testing.T) {
 			}
 		}
 		if test.assignee != "" {
-			if want, get := test.assignee, update.Assignee.String; want != get {
+			if want, get := test.assignee, update.AssigneeID.String; want != get {
 				t.Errorf("test %d, assignee, wanted %q, got %q", i, want, get)
 			}
 		}
@@ -176,7 +176,7 @@ func TestIssueHistory(t *testing.T) {
 			}
 		}
 		if test.assignee != "" {
-			if want, get := test.assignee, issue2.Assignee; want != get {
+			if want, get := test.assignee, issue2.AssigneeID; want != get {
 				t.Errorf("test %d, assignee, wanted %q got %q", i, want, get)
 			}
 		}

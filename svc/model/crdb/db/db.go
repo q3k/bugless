@@ -31,6 +31,7 @@ type Database interface {
 type Session interface {
 	Category() CategoryGetter
 	Issue() IssueGetter
+	User() UserGetter
 	Commit() error
 	Rollback() error
 }
@@ -96,6 +97,7 @@ func (d *database) Begin(ctx context.Context) Session {
 	}
 	res.category = &databaseCategory{res}
 	res.issue = &databaseIssue{res}
+	res.user = &databaseUser{res}
 	return res
 }
 
@@ -111,6 +113,7 @@ type session struct {
 	tx       *sqlx.Tx
 	category *databaseCategory
 	issue    *databaseIssue
+	user     *databaseUser
 }
 
 func (s *session) Commit() error {
@@ -127,4 +130,8 @@ func (s *session) Category() CategoryGetter {
 
 func (s *session) Issue() IssueGetter {
 	return s.issue
+}
+
+func (s *session) User() UserGetter {
+	return s.user
 }

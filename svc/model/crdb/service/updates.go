@@ -61,8 +61,8 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 	applyUpdateLogic(issue.Proto().Current, diff)
 
 	update := &db.IssueUpdate{
-		IssueID: req.Id,
-		Author:  req.Author.Id,
+		IssueID:  req.Id,
+		AuthorID: req.Author.Id,
 	}
 	if req.Comment != "" {
 		update.Comment.Valid = true
@@ -73,9 +73,9 @@ func (s *Service) UpdateIssue(ctx context.Context, req *spb.ModelUpdateIssueRequ
 		update.Title.String = diff.Title.Value
 	}
 	if diff.Assignee != nil {
-		update.Assignee.Valid = true
+		update.AssigneeID.Valid = true
 		if diff.Assignee.Value != nil {
-			update.Assignee.String = diff.Assignee.Value.Id
+			update.AssigneeID.String = diff.Assignee.Value.Id
 		}
 	}
 	if validation.IssueType(diff.Type) == nil {
