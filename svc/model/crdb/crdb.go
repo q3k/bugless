@@ -32,14 +32,14 @@ func main() {
 
 	ctx := m.Context()
 
-	var s *Service
+	var s *service.Service
 	var err error
 
 	if flagEatMyData {
 		l.Warn("Running with in-memory database. This WILL EAT YOUR DATA")
 		s, err = service.NewInMemory(ctx, l)
 	} else {
-		s, err = service.NewDSN(fctx, lagDSN, true, l)
+		s, err = service.NewDSN(ctx, flagDSN, true, l)
 	}
 	if err != nil {
 		l.Crit("creating service failed", "err", err)
