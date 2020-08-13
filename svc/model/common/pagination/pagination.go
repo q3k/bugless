@@ -101,7 +101,7 @@ func Resample(start V, count int64, c ChunkSender) error {
 	maxChunkSize := int64(100)
 
 	var sent int
-	first := false
+	first := true
 	for {
 		// If we already sent what the consumer requested, we're done.
 		if int64(sent) >= count {
