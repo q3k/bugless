@@ -34,5 +34,5 @@ go_test(
         "db_test.go",
     ],
     embed = [":go_default_library"],
-    deps = ["@com_github_cockroachdb_cockroach_go//testserver:go_default_library"],
+    deps = ["@com_github_cockroachdb_cockroach_go_v2//testserver:go_default_library"],
 )

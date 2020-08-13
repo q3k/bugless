@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-go/testserver"
+	"github.com/cockroachdb/cockroach-go/v2/testserver"
 )
 
 // Test users populated in the dut database.
@@ -23,9 +23,6 @@ var (
 func dut(ctx context.Context, t *testing.T) (Database, func()) {
 	ts, err := testserver.NewTestServer()
 	if err != nil {
-		t.Fatal(err)
-	}
-	if err := ts.Start(); err != nil {
 		t.Fatal(err)
 	}
 
