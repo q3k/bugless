@@ -51,6 +51,7 @@ message ModelGetIssuesRequest {
 
 message ModelGetIssuesChunk {
     repeated common.Issue issues = 1;
+    repeated string query_errors = 2;
 }
 
 message ModelGetIssueUpdatesRequest {

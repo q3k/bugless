@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -68,6 +69,10 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 	}
 
 	var err error
+	var queryErrors []string
+	// Query cannot return any results, because filter requested datum that is
+	// known not to exist (ie. a user that could not be resolved).
+	var queryImpossible bool
 
 	author := strings.ToLower(strings.TrimSpace(q.Author))
 	authorID := ""
@@ -75,8 +80,13 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 	// TODO(q3k): cache these lookups
 	if author != "" {
 		authorID, err = s.db.Do(ctx).User().ResolveUsername(author)
-		if err != nil && err != db.UserErrorNoSuchUsername {
-			s.l.Error("ResolveUser failed", "username", author, "err", err)
+		if err != nil {
+			if err == db.UserErrorNoSuchUsername {
+				queryErrors = append(queryErrors, fmt.Sprintf("unknown author %q", author))
+				queryImpossible = true
+			} else {
+				s.l.Error("ResolveUser failed", "username", author, "err", err)
+			}
 		}
 	}
 
@@ -84,8 +94,13 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 	assigneeID := ""
 	if assignee != "" {
 		assigneeID, err = s.db.Do(ctx).User().ResolveUsername(assignee)
-		if err != nil && err != db.UserErrorNoSuchUsername {
-			s.l.Error("ResolveUser failed", "username", author, "err", err)
+		if err != nil {
+			if err == db.UserErrorNoSuchUsername {
+				queryErrors = append(queryErrors, fmt.Sprintf("unknown assignee %q", assignee))
+				queryImpossible = true
+			} else {
+				s.l.Error("ResolveUser failed", "username", author, "err", err)
+			}
 		}
 	}
 
@@ -94,8 +109,8 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 		Assignee: assigneeID,
 		Status:   int64(search.ParseIssueStatus(q.Status)),
 	}
-	if filter.Author == "" && filter.Assignee == "" && filter.Status == 0 {
-		return status.Error(codes.Unimplemented, "no keyword search implemented, use query filters")
+	if !queryImpossible && filter.Author == "" && filter.Assignee == "" && filter.Status == 0 {
+		return status.Error(codes.Unimplemented, "keyword search unimplemented, use query filters")
 	}
 
 	orderBy := db.IssueOrderBy{
@@ -107,17 +122,24 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 	case spb.ModelGetIssuesRequest_ORDER_BY_LAST_UPDATE:
 		orderBy.By = db.IssueOrderUpdated
 	default:
-		return status.Errorf(codes.InvalidArgument, "invalid order_by")
+		return status.Errorf(codes.InvalidArgument, "invalid order_by (%s)", req.OrderBy.String())
 	}
 
 	return pagination.ResampleInt64(req.Pagination, func(first bool, start pagination.V, count int64) (int, pagination.V, error) {
-		opts := db.IssueFilterOpts{Start: start.(int64), Count: count}
-		issues, err := s.db.Do(ctx).Issue().Filter(filter, orderBy, &opts)
-		if err != nil {
-			return 0, start, err
+
+		var issues []*db.Issue
+		if !queryImpossible {
+			opts := db.IssueFilterOpts{Start: start.(int64), Count: count}
+			issues, err = s.db.Do(ctx).Issue().Filter(filter, orderBy, &opts)
+			if err != nil {
+				return 0, start, err
+			}
 		}
 
 		chunk := &spb.ModelGetIssuesChunk{}
+		if first {
+			chunk.QueryErrors = queryErrors
+		}
 		for _, issue := range issues {
 			ip, err := issue.ProtoWithUsers(s.db.Do(ctx))
 			if err != nil {
