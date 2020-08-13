@@ -8,9 +8,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "33cba8b89be6c81b1461f1c438424f7a1aa4e31998dbe9ed6f8319583daac8c7",
-    strip_prefix = "protobuf-3.10.0",
-    urls = ["https://github.com/google/protobuf/archive/v3.10.0.zip"],
+    sha256 = "9748c0d90e54ea09e5e75fb7fac16edce15d2028d4356f32211cfa3c0e956564",
+    strip_prefix = "protobuf-3.11.4",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.zip"],
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
@@ -21,19 +21,19 @@ protobuf_deps()
 
 http_archive(
     name = "io_bazel_rules_go",
+    sha256 = "2697f6bc7c529ee5e6a2d9799870b9ec9eaeb3ee7d70ed50b87a2c2c97e13d9e",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.23.8/rules_go-v0.23.8.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.23.8/rules_go-v0.23.8.tar.gz",
     ],
-    sha256 = "842ec0e6b4fbfdd3de6150b61af92901eeb73681fd4d185746644c338f51d4c0",
 )
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
+    sha256 = "cdb02a887a7187ea4d5a27452311a75ed8637379a1287d8eeb952138ea485f7d",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.21.1/bazel-gazelle-v0.21.1.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.21.1/bazel-gazelle-v0.21.1.tar.gz",
     ],
 )
 
@@ -169,7 +169,7 @@ go_repository(
 go_repository(
     name = "org_golang_google_grpc",
     importpath = "google.golang.org/grpc",
-    tag = "v1.20.1",
+    tag = "v1.29.1",
 )
 
 go_repository(
@@ -184,10 +184,12 @@ go_repository(
     importpath = "golang.org/x/lint",
 )
 
+
 go_repository(
     name = "org_golang_x_net",
-    commit = "d8887717615a",
     importpath = "golang.org/x/net",
+    sum = "h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=",
+    version = "v0.0.0-20190311183353-d8887717615a",
 )
 
 go_repository(
@@ -211,7 +213,8 @@ go_repository(
 go_repository(
     name = "org_golang_x_text",
     importpath = "golang.org/x/text",
-    tag = "v0.3.0",
+    sum = "h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=",
+    version = "v0.3.0",
 )
 
 go_repository(
@@ -240,9 +243,9 @@ go_repository(
 
 go_repository(
     name = "com_github_golang_migrate_migrate_v4",
-    commit = "e93eaeb3fe21ce2ccc1365277a01863e6bc84d9c",
+    commit = "8fd31348ae7b1941edb69e0b7ab372387051b4e2",
     importpath = "github.com/golang-migrate/migrate/v4",
-    remote = "https://github.com/golang-migrate/migrate",
+    remote = "https://github.com/q3k/migrate",
     vcs = "git",
 )
 
@@ -363,9 +366,10 @@ go_repository(
 )
 
 go_repository(
-    name = "com_github_cockroachdb_cockroach_go",
-    commit = "f565e4789405b45ccb04a4bcf92c7fcc2abb5b5c",
-    importpath = "github.com/cockroachdb/cockroach-go",
+    name = "com_github_cockroachdb_cockroach_go_v2",
+    importpath = "github.com/cockroachdb/cockroach-go/v2",
+    sum = "h1:kG3i3YDEcg8Sby8PzUu3Wvp67Ienevj4bRAnHDF/xNc=",
+    version = "v2.0.5",
 )
 
 go_repository(
@@ -569,4 +573,11 @@ go_repository(
     importpath = "github.com/go-ole/go-ole",
     sum = "h1:nNBDSCOigTSiarFpYE9J/KtEA1IOW4CNeqT9TQDqCxI=",
     version = "v1.2.4",
+)
+
+go_repository(
+    name = "com_github_pkg_errors",
+    importpath = "github.com/pkg/errors",
+    sum = "h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=",
+    version = "v0.9.1",
 )

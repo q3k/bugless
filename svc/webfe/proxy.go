@@ -8,8 +8,6 @@ import (
 	"io"
 
 	pb "github.com/q3k/bugless/proto/svc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type backendProxy struct {
@@ -58,5 +56,9 @@ func (b *backendProxy) GetIssueUpdates(req *pb.ModelGetIssueUpdatesRequest, srv 
 }
 
 func (b *backendProxy) NewIssue(ctx context.Context, req *pb.ModelNewIssueRequest) (*pb.ModelNewIssueResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "unimplemented")
+	return b.model.NewIssue(ctx, req)
+}
+
+func (b *backendProxy) UpdateIssue(ctx context.Context, req *pb.ModelUpdateIssueRequest) (*pb.ModelUpdateIssueResponse, error) {
+	return b.model.UpdateIssue(ctx, req)
 }

@@ -73,7 +73,7 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		for {
-			issue, err := stream.Recv()
+			chunk, err := stream.Recv()
 			if err == io.EOF {
 				break
 			}
@@ -81,15 +81,17 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 				issuesGetErr = err
 				break
 			}
-			issues = append(issues, map[string]interface{}{
-				"priority":     fmt.Sprintf("%d", issue.Current.Priority),
-				"id":           fmt.Sprintf("%d", issue.Id),
-				"type":         issueTypePretty(issue.Current.Type),
-				"title":        issue.Current.Title,
-				"assignee":     issue.Current.Assignee.Id,
-				"status":       issueStatusPretty(issue.Current.Status),
-				"last_updated": time.Unix(0, issue.LastUpdated.Nanos).Format("Jan 2, 2006 15:04:05"),
-			})
+			for _, issue := range chunk.Issues {
+				issues = append(issues, map[string]interface{}{
+					"priority":     fmt.Sprintf("%d", issue.Current.Priority),
+					"id":           fmt.Sprintf("%d", issue.Id),
+					"type":         issueTypePretty(issue.Current.Type),
+					"title":        issue.Current.Title,
+					"assignee":     issue.Current.Assignee.Id,
+					"status":       issueStatusPretty(issue.Current.Status),
+					"last_updated": time.Unix(0, issue.LastUpdated.Nanos).Format("Jan 2, 2006 15:04:05"),
+				})
+			}
 		}
 	}
 

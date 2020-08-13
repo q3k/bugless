@@ -60,9 +60,6 @@ func inMemoryDatabase(ctx context.Context) (db.Database, error) {
 	if err != nil {
 		return nil, fmt.Errorf("NewTestServer: %v", err)
 	}
-	if err := ts.Start(); err != nil {
-		return nil, fmt.Errorf("testserver.Start: %v", err)
-	}
 
 	dsn := "cockroach://" + strings.TrimPrefix(ts.PGURL().String(), "postgresql://")
 
