@@ -75,6 +75,11 @@
                             <th>ID</th>
                             <th>Last Modified</th>
                         </tr>
+                        {if length($issues) == 0}
+                        <tr>
+                            <td colspan=7><i>No issues matched query.</i></td>
+                        </tr>
+                        {/if}
                         {for $issue in $issues}
                         <tr>
                             <td style="padding-right: 0;" class="prio-{$issue.priority}">P{$issue.priority}</td>
