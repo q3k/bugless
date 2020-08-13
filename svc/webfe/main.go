@@ -63,6 +63,7 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 				Search: q,
 			},
 		},
+		OrderBy: pb.ModelGetIssuesRequest_ORDER_BY_LAST_UPDATE,
 	})
 
 	var issues []map[string]interface{}
