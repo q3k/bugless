@@ -139,14 +139,17 @@ func Resample(start V, count int64, c ChunkSender) error {
 // interpreting the start value as an int64.
 func ResampleInt64(p *spb.PaginationSelector, c ChunkSender) error {
 	var after int64
+	var count int64
 	var err error
-	if p.After != "" {
-		after, err = strconv.ParseInt(p.After, 10, 64)
-		if err != nil {
-			return status.Error(codes.InvalidArgument, "invalid pagination 'after'")
+	if p != nil {
+		if p.After != "" {
+			after, err = strconv.ParseInt(p.After, 10, 64)
+			if err != nil {
+				return status.Error(codes.InvalidArgument, "invalid pagination 'after'")
+			}
 		}
+		count = p.Count
 	}
-	count := p.Count
 	if count <= 0 {
 		count = 100
 	}
