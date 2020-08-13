@@ -3,6 +3,9 @@
 
 goog.provide("bugless");
 
+goog.require("goog.dom");
+goog.require("goog.style");
+
 //goog.require("grpc.web.Status");
 goog.require("proto.bugless.common.Issue");
 goog.require("proto.bugless.svc.ModelGetIssuesRequest");
@@ -56,4 +59,10 @@ bugless.App.prototype.foo = function() {
 bugless.run = (container) => {
     /** @suppress {unusedLocalVariables} */
     let app = new bugless.App(/** @type {!HTMLBodyElement} */ (container));
+
+    goog.array.forEach(goog.dom.getElementsByClass("closebtn"), (el) => {
+        goog.events.listen(el, goog.events.EventType.CLICK, () => {
+            goog.style.setElementShown(el.parentElement, false);
+        });
+    });
 };

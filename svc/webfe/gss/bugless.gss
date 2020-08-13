@@ -200,6 +200,32 @@ hr {
     flex-grow: 1;
 }
 
+.rightfiller .errors {
+    position: absolute;
+    top: 4em;
+    left: 50%;
+    transform: translate(-50%, 0);
+    font-size: 0.8em;
+    color: #fff;
+    font-weight: 800;
+}
+
+.rightfiller .errors li {
+    background-color: #f35128;
+    padding: 0.5em 1em 0.5em 1em;
+    border: 1px solid #931e00;
+    font-family: Helvetica, Arial, Sans-Serif;
+    margin-bottom: 0.5em;
+    box-shadow: 1px 1px #dfcac4;
+}
+
+.rightfiller .errors li a {
+    text-decoration: none;
+    margin-left: 1em;
+    float: right;
+    color: #104d86;
+}
+
 .navbar {
     padding: 0.5em;
     border-bottom: 1px solid #eee;

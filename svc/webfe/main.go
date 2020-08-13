@@ -67,6 +67,7 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var issues []map[string]interface{}
+	var queryErrors []string
 	var issuesGetErr error
 	if err != nil {
 		issuesGetErr = err
@@ -81,6 +82,9 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				issuesGetErr = err
 				break
+			}
+			if chunk.QueryErrors != nil {
+				queryErrors = append(queryErrors, chunk.QueryErrors...)
 			}
 			for _, issue := range chunk.Issues {
 				issues = append(issues, map[string]interface{}{
@@ -102,10 +106,11 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = f.tofu.Render(w, "bugless.templates.base.html", map[string]interface{}{
-		"title":  "Bugless - Home",
-		"lvr":    f.lvr,
-		"query":  q,
-		"issues": issues,
+		"title":       "Bugless - Home",
+		"lvr":         f.lvr,
+		"query":       q,
+		"queryErrors": queryErrors,
+		"issues":      issues,
 	})
 	if err == nil {
 		return

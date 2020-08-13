@@ -7,6 +7,7 @@
     {@param title: string}
     {@param lvr: string}
     {@param query: string}
+    {@param queryErrors: list<string>}
     {@param issues: list<[
         id: string, priority: string, type: string,
         title: string, assignee: string, status: string,
@@ -53,6 +54,15 @@
                     </div>
                 </div>
                 <div class="rightfiller">
+                    {if length($queryErrors) > 0}
+                    <div class="errors">
+                        <ul>
+                        {for $error in $queryErrors}
+                            <li>Error: {$error} <a href="#" class="closebtn">Dismiss</a></li>
+                        {/for}
+                        </ul>
+                    </div>
+                    {/if}
                     <div class="navbar">
                         <button class="button button-last">Refresh</button>
 
