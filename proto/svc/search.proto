@@ -5,8 +5,6 @@ syntax = "proto3";
 package bugless.svc;
 option go_package = "github.com/q3k/bugless/proto/svc";
 
-import "proto/common/common.proto";
-
 // Search service - used to run full text search queries.
 // This is used for fuzzy search of issues / comments, nothing more.  more.
 // This service is useless for filtering issues by assignee, author, etc.
