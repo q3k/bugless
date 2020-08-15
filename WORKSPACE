@@ -184,7 +184,6 @@ go_repository(
     importpath = "golang.org/x/lint",
 )
 
-
 go_repository(
     name = "org_golang_x_net",
     importpath = "golang.org/x/net",
@@ -194,8 +193,9 @@ go_repository(
 
 go_repository(
     name = "org_golang_x_oauth2",
-    commit = "d2e6202438be",
     importpath = "golang.org/x/oauth2",
+    sum = "h1:TzXSXBo42m9gQenoE3b9BGiEpg5IG2JkU5FkPIawgtw=",
+    version = "v0.0.0-20200107190931-bf48bf16ab8d",
 )
 
 go_repository(
@@ -416,7 +416,7 @@ go_repository(
     name = "com_github_robfig_soy",
     importpath = "github.com/robfig/soy",
     remote = "https://github.com/q3k/soy",
-    commit = "c45262fef8da275270c3cf0cb781ed5d87188b38",
+    commit = "d7b05cdabd725905d1dc7634062c0eab980977ae",
     vcs = "git",
 )
 
@@ -580,4 +580,25 @@ go_repository(
     importpath = "github.com/pkg/errors",
     sum = "h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=",
     version = "v0.9.1",
+)
+
+go_repository(
+    name = "com_github_coreos_go_oidc",
+    importpath = "github.com/coreos/go-oidc",
+    sum = "h1:mh48q/BqXqgjVHpy2ZY7WnWAbenxRjsz9N1i1YxjHAk=",
+    version = "v2.2.1+incompatible",
+)
+
+go_repository(
+    name = "com_github_pquerna_cachecontrol",
+    importpath = "github.com/pquerna/cachecontrol",
+    sum = "h1:J9b7z+QKAmPf4YLrFg6oQUotqHQeUNWwkvo7jZp1GLU=",
+    version = "v0.0.0-20180517163645-1555304b9b35",
+)
+
+go_repository(
+    name = "in_gopkg_square_go_jose_v2",
+    importpath = "gopkg.in/square/go-jose.v2",
+    sum = "h1:7odma5RETjNHWJnR32wx8t+Io4djHE1PqxCFx3iiZ2w=",
+    version = "v2.5.1",
 )
