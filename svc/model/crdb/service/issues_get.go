@@ -76,7 +76,6 @@ func (s *Service) getIssuesBySearch(req *spb.ModelGetIssuesRequest, reqs *spb.Mo
 
 	author := strings.ToLower(strings.TrimSpace(q.Author))
 	authorID := ""
-	// TODO(q3k): bubble up these errors to the RPC caller
 	// TODO(q3k): cache these lookups
 	if author != "" {
 		authorID, err = s.db.Do(ctx).User().ResolveUsername(author)
