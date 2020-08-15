@@ -8,6 +8,7 @@ proto_library(
     srcs = [
         "model.proto",
         "search.proto",
+        "webfe.proto",
     ],
     visibility = ["//visibility:public"],
     deps = ["//proto/common:common_proto"],

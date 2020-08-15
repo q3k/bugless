@@ -1,0 +1,37 @@
+// Copyright 2020 Sergiusz Bazanski <q3k@q3k.org>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+syntax = "proto3";
+package bugless.svc;
+option go_package = "github.com/q3k/bugless/proto/svc";
+
+import "proto/common/common.proto";
+
+// Cookie stored in user agent (browser) representing a User Session.
+// These only get created if a user has opted to log in - otherwise, no data is
+// stored in the user's browser.
+// This will be serialized to a binary proto message and kept in an encrypted
+// cookie.
+message WebSession {
+    // OAuth Access Token. Passed to backend alongside gRPC calls. The backend
+    // uses this for authorization.
+    string access_token = 1;
+    // Planned expiration time of token. After this time, the token should not
+    // be treated as valid, and the user should be logged out.
+    bugless.common.Timestamp token_expiration = 2;
+    // Username of user for which the token has been emitted. This is de facto
+    // dernormalized data - given the token above, the username can be retrieved
+    // from the OIDC UserInfo endpoint. However, to prevent requests on every
+    // webfe request (or having to cache this data in a by design stateless
+    // service) we store this information in the user's cookie.
+    string username = 3;
+    // As usernames can potentially change (or can be revoked), this data has
+    // an expiration date (shorter than the potentially long-lived token).
+    bugless.common.Timestamp denormalized_expiration = 4;
+}
+
+// HACK: our build system currently expected gRPC definitions in every proto
+// file, because of some JS mess.
+// TODO(q3k): fix this
+service WebFake {
+}
