@@ -147,6 +147,10 @@ hr {
     padding: 0.2em 1em 0.2em 1em;
 }
 
+.topbar-right span {
+    font-size: 0.9em;
+}
+
 .lowerhalf {
     flex-grow: 1;
 

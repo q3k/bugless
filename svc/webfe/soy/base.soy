@@ -39,7 +39,7 @@
                 </div>
                 <div class="topbar-right">
                     {if $username != ''}
-                    {$username} <a href="/logout">Sign out</a>
+                    <span>{$username}</span> <a href="/logout">Sign out</a>
                     {else}
                     <a href="/login">Sign in</a>
                     {/if}
