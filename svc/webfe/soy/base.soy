@@ -14,6 +14,7 @@
         title: string, assignee: string, status: string,
         last_updated: string
     ]>}
+    {@param paths: [js: string, css: string]}
 
     {let $username: $session.username ?: ''/}
     <!doctype html>
@@ -21,11 +22,11 @@
     	<head>
     		<meta charset="UTF-8">
     		<title>{$title}</title>
-    		<script src="/js.js"></script>
+    		<script src="{$paths.js}"></script>
             {if $lvr}
             <script src="{$lvr}"></script>
             {/if}
-    		<link rel="stylesheet" type="text/css" href="/gss.css" />
+    		<link rel="stylesheet" type="text/css" href="{$paths.css}" />
     	</head>
     	<body id="container">
             <div class="topbar">

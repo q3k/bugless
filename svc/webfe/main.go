@@ -54,6 +54,13 @@ type httpFrontend struct {
 	oauth2 *oauth2.Config
 	// secretKey is a secret used to encrypt and authenticate client-side cookies.
 	secretKey []byte
+
+	// paths to static content
+	paths struct {
+		jsMap string
+		js    string
+		css   string
+	}
 }
 
 func (f *httpFrontend) internalError(w http.ResponseWriter) {
@@ -144,6 +151,8 @@ func main() {
 		model: pb.NewModelClient(conn),
 	}
 
+	mux := http.NewServeMux()
+
 	fe := &httpFrontend{
 		model:     pb.NewModelClient(conn),
 		l:         l.New("service", "frontend"),
@@ -158,7 +167,6 @@ func main() {
 	pb.RegisterModelServer(grpcWebServer, proxy)
 	wrappedGrpc := grpcweb.WrapServer(grpcWebServer)
 
-	mux := http.NewServeMux()
 	mux.Handle("/rpc/", http.StripPrefix("/rpc", http.HandlerFunc(wrappedGrpc.ServeHTTP)))
 
 	mux.HandleFunc("/", fe.viewIssues)
@@ -167,19 +175,11 @@ func main() {
 	mux.HandleFunc("/login/oauth-redirect", fe.viewLoginOAuthRedirect)
 	mux.HandleFunc("/logout", fe.viewLogout)
 
-	mux.HandleFunc("/js.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/javascript")
-		fmt.Fprintf(w, "//# sourceMappingURL=/js.js.map\n")
-		w.Write(js.Data["js.js"])
-	})
-	mux.HandleFunc("/js.js.map", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(js.Data["js.js.map"])
-	})
-	mux.HandleFunc("/gss.css", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/css")
-		w.Write(gss.Data["gss.css"])
-	})
+	fe.paths.jsMap = serveHashedStatic(mux, "js.js.map", "application/json", js.Data["js.js.map"])
+	jsData := []byte(fmt.Sprintf("//# sourceMappingURL=%s\n", fe.paths.jsMap))
+	jsData = append(jsData, js.Data["js.js"]...)
+	fe.paths.js = serveHashedStatic(mux, "js.js", "text/javascript", jsData)
+	fe.paths.css = serveHashedStatic(mux, "gss.css", "text/css", gss.Data["gss.css"])
 
 	ctx := m.Context()
 	server := &http.Server{Addr: flagPublicHTTPAddress, Handler: mux}

@@ -83,6 +83,10 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 		"queryErrors": queryErrors,
 		"issues":      issues,
 		"session":     session.soy(),
+		"paths": map[string]string{
+			"js":  f.paths.js,
+			"css": f.paths.css,
+		},
 	})
 	if err == nil {
 		return

@@ -9,6 +9,7 @@ go_library(
         "proxy.go",
         "view_issues.go",
         "view_login.go",
+        "view_static.go",
     ],
     importpath = "github.com/q3k/bugless/svc/webfe",
     visibility = ["//visibility:private"],
