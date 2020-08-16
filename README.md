@@ -29,10 +29,10 @@ Start the model with an in-memory database:
 
 The model will listen on `:4200` for gRPC and `:4201` for debug HTTP.
 
-Start the web frontend:
+Start the web frontend (this currently has a hard dep on an OIDC provider - any OIDC provider should do, but bugless is being actively developed against [sso.hackerspace.pl](https://sso.hackerspace.pl/)).:
 
     bazel build //svc/webfe
-    bazel-bin/svc/webfe/*/webfe -hspki_disable
+    bazel-bin/svc/webfe/*/webfe -hspki_disable -oidc_provider https://XXX -oidc_client_id YYY -oidc_client_secret ZZZ -secret hackme
 
 The web frontend will connect to the model at `127.0.0.1:4200` by default,
 serve debug HTTP at `:4211`, and serve public HTTP at `:8080`. Visting
