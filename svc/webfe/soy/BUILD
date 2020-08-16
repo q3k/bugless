@@ -5,7 +5,6 @@ closure_js_template_library(
     srcs = [
         "base.soy",
         "bits.soy",
-        "bugless.soy",
     ],
     visibility = ["//visibility:public"],
 )
@@ -18,7 +17,6 @@ go_embed_data(
     srcs = [
         "base.soy",
         "bits.soy",
-        "bugless.soy",
     ],
     package = "soy",
     flatten = True,
