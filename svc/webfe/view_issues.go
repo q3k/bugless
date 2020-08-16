@@ -18,10 +18,6 @@ func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
 	f.l.Info("session", "session", session)
 
 	q := r.URL.Query().Get("q")
-	if r.URL.Path != "/issues" {
-		http.Redirect(w, r, fmt.Sprintf("/issues?q=%s", url.QueryEscape(q)), 302)
-		return
-	}
 	if q == "" && session != nil {
 		q = "author:" + session.username
 		http.Redirect(w, r, fmt.Sprintf("/issues?q=%s", url.QueryEscape(q)), 302)

@@ -169,7 +169,7 @@ func main() {
 
 	mux.Handle("/rpc/", http.StripPrefix("/rpc", http.HandlerFunc(wrappedGrpc.ServeHTTP)))
 
-	mux.HandleFunc("/", fe.viewIssues)
+	mux.HandleFunc("/", fe.viewRoot)
 	mux.HandleFunc("/issues", fe.viewIssues)
 	mux.HandleFunc("/login", fe.viewLogin)
 	mux.HandleFunc("/login/oauth-redirect", fe.viewLoginOAuthRedirect)
