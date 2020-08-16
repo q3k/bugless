@@ -8,12 +8,14 @@
     {@param lvr: string}
     {@param query: string}
     {@param queryErrors: list<string>}
+    {@param session: [username: string]}
     {@param issues: list<[
         id: string, priority: string, type: string,
         title: string, assignee: string, status: string,
         last_updated: string
     ]>}
-    //]>}
+
+    {let $username: $session.username ?: ''/}
     <!doctype html>
     <html>
     	<head>
@@ -35,7 +37,11 @@
                     </form>
                 </div>
                 <div class="topbar-right">
-                    <a href="#">Sign in</a>
+                    {if $username != ''}
+                    {$username} <a href="/logout">Sign out</a>
+                    {else}
+                    <a href="/login">Sign in</a>
+                    {/if}
                 </div>
             </div>
             <div class="lowerhalf">
@@ -46,10 +52,28 @@
                     <hr />
                     <div class="padder">
                         <ul>
-                            <li><a href="#">Assigned to me</a></li>
-                            <li><a href="#">Starred by me</a></li>
-                            <li><a href="#">CC'd to me</a></li>
-                            <li class="selected"><a href="#">Reported by me</a></li>
+                            {if $username != ''}
+                            {call bugless.templates.bits.sidebarQuery}
+                                {param target: 'assignee:' + $username /}
+                                {param name: 'Assigned to me' /}
+                                {param current: $query /}
+                            {/call}
+                            {call bugless.templates.bits.sidebarQuery}
+                                {param target: 'starred:' + $username /}
+                                {param name: 'Starred by me' /}
+                                {param current: $query /}
+                            {/call}
+                            {call bugless.templates.bits.sidebarQuery}
+                                {param target: 'cc:' + $username /}
+                                {param name: 'CCd to me' /}
+                                {param current: $query /}
+                            {/call}
+                            {call bugless.templates.bits.sidebarQuery}
+                                {param target: 'author:' + $username /}
+                                {param name: 'Authored by me' /}
+                                {param current: $query /}
+                            {/call}
+                            {/if}
                         </ul>
                     </div>
                 </div>

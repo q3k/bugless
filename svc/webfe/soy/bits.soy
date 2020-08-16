@@ -1,0 +1,19 @@
+// Copyright 2020 Sergiusz Bazanski <q3k@q3k.org>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+{namespace bugless.templates.bits}
+
+{template .sidebarQuery}
+    {@param target: string}
+    {@param name: string}
+    {@param current: string}
+
+    {if $target == $current}
+    <li class="selected">
+    {else}
+    <li>
+    {/if}
+        <a href="/issues?q={$target}">{$name}</a>
+    </li>
+{/template}
+
