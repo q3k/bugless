@@ -4,12 +4,10 @@
 package main
 
 import (
+	"crypto/sha256"
 	"flag"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"time"
 
 	"code.hackerspace.pl/hscloud/go/mirko"
 	"code.hackerspace.pl/hscloud/go/pki"
@@ -18,16 +16,24 @@ import (
 	"github.com/q3k/bugless/svc/webfe/js"
 	"github.com/q3k/bugless/svc/webfe/soy"
 
+	oidc "github.com/coreos/go-oidc"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	log "github.com/inconshreveable/log15"
 	gosoy "github.com/robfig/soy"
 	"github.com/robfig/soy/soyhtml"
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 )
 
 var (
 	flagModel             string
 	flagPublicHTTPAddress string
+	flagSecret            string
+	flagOIDCProvider      string
+	flagOIDCClientID      string
+	flagOIDCClientSecret  string
+	flagOIDCRedirectURL   string
 )
 
 func init() {
@@ -42,89 +48,45 @@ type httpFrontend struct {
 	lvr string
 	// tofu is the soy/tofu html template bundle.
 	tofu *soyhtml.Tofu
+	// oidc is the oidc provider client
+	oidc *oidc.Provider
+	// oauth2 is the oauth2 client config
+	oauth2 *oauth2.Config
+	// secretKey is a secret used to encrypt and authenticate client-side cookies.
+	secretKey []byte
 }
 
-func (f *httpFrontend) viewIssues(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query().Get("q")
-	if r.URL.Path != "/issues" {
-		http.Redirect(w, r, fmt.Sprintf("/issues?q=%s", url.QueryEscape(q)), 302)
-		return
-	}
-	if q == "" {
-		// TODO(q3k): unhardcode this once we get authn & user storage
-		q = "author:q3k@q3k.org"
-		http.Redirect(w, r, fmt.Sprintf("/issues?q=%s", url.QueryEscape(q)), 302)
-		return
-	}
-
-	stream, err := f.model.GetIssues(r.Context(), &pb.ModelGetIssuesRequest{
-		Query: &pb.ModelGetIssuesRequest_BySearch_{
-			BySearch: &pb.ModelGetIssuesRequest_BySearch{
-				Search: q,
-			},
-		},
-		OrderBy: pb.ModelGetIssuesRequest_ORDER_BY_LAST_UPDATE,
-	})
-
-	var issues []map[string]interface{}
-	var queryErrors []string
-	var issuesGetErr error
-	if err != nil {
-		issuesGetErr = err
-	}
-
-	if err == nil {
-		for {
-			chunk, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				issuesGetErr = err
-				break
-			}
-			if chunk.QueryErrors != nil {
-				queryErrors = append(queryErrors, chunk.QueryErrors...)
-			}
-			for _, issue := range chunk.Issues {
-				issues = append(issues, map[string]interface{}{
-					"priority":     fmt.Sprintf("%d", issue.Current.Priority),
-					"id":           fmt.Sprintf("%d", issue.Id),
-					"type":         issueTypePretty(issue.Current.Type),
-					"title":        issue.Current.Title,
-					"assignee":     issue.Current.Assignee.Id,
-					"status":       issueStatusPretty(issue.Current.Status),
-					"last_updated": time.Unix(0, issue.LastUpdated.Nanos).Format("Jan 2, 2006 15:04:05"),
-				})
-			}
-		}
-	}
-
-	if issuesGetErr != nil {
-		// TODO: expose to HTML
-		f.l.Error("could not get issues", "err", issuesGetErr)
-	}
-
-	err = f.tofu.Render(w, "bugless.templates.base.html", map[string]interface{}{
-		"title":       "Bugless - Home",
-		"lvr":         f.lvr,
-		"query":       q,
-		"queryErrors": queryErrors,
-		"issues":      issues,
-	})
-	if err == nil {
-		return
-	}
-	f.l.Crit("could not render template", "err", err)
-	fmt.Fprintf(w, "something went wrong.")
+func (f *httpFrontend) internalError(w http.ResponseWriter) {
+	w.WriteHeader(500)
+	fmt.Fprintf(w, "An internal server error occured. Sorry, please try again later.")
 }
 
 func main() {
 	flag.StringVar(&flagPublicHTTPAddress, "public_http_address", "127.0.0.1:8080", "Address to listen on for public HTTP connections")
+	flag.StringVar(&flagSecret, "secret", "", "Secret used to encrypt sensitive data in user cookies. Must be shared across all frontend instances")
 	flag.StringVar(&flagModel, "model", "127.0.0.1:4200", "Address of bugless model service")
+	flag.StringVar(&flagOIDCProvider, "oidc_provider", "https://sso.hackerspace.pl", "Address of OpenID Connect provider")
+	flag.StringVar(&flagOIDCClientID, "oidc_client_id", "", "OIDC Client ID")
+	flag.StringVar(&flagOIDCClientSecret, "oidc_client_secret", "", "OIDC Client Secret")
 	flag.Parse()
+
 	m := mirko.New()
 	l := log.New()
+
+	if len(flagSecret) < 8 {
+		l.Crit("secret must be at least 8 characters long")
+		return
+	}
+
+	if flagOIDCClientID == "" {
+		l.Crit("oidc_client_id must be set")
+		return
+	}
+
+	if flagOIDCClientSecret == "" {
+		l.Crit("oidc_client_secret must be set")
+		return
+	}
 
 	// Live Reload currently disabled because it seems broken (reloads before HTTP server is up).
 	lvr := ""
@@ -144,6 +106,29 @@ func main() {
 		return
 	}
 
+	provider, err := oidc.NewProvider(m.Context(), flagOIDCProvider)
+	if err != nil {
+		l.Crit("could not setup oidc provider", "err", err)
+		return
+	}
+
+	oauth2Config := &oauth2.Config{
+		ClientID:     flagOIDCClientID,
+		ClientSecret: flagOIDCClientSecret,
+		RedirectURL:  flagOIDCRedirectURL,
+
+		// Discovery returns the OAuth2 endpoints.
+		Endpoint: provider.Endpoint(),
+
+		// "openid" is a required scope for OpenID Connect flows.
+		Scopes: []string{oidc.ScopeOpenID, "profile:read"},
+	}
+
+	// The salt isn't important - we're just using PBKDF2 as a glorified
+	// string-to-bytes encoding. We rely on the randmoness of the given secret
+	// to provide security.
+	secretKey := pbkdf2.Key([]byte(flagSecret), []byte("bugless!"), 4096, 32, sha256.New)
+
 	if err := m.Listen(); err != nil {
 		l.Crit("could not listen", "err", err)
 		return
@@ -158,11 +143,15 @@ func main() {
 	proxy := &backendProxy{
 		model: pb.NewModelClient(conn),
 	}
+
 	fe := &httpFrontend{
-		model: pb.NewModelClient(conn),
-		l:     l.New("service", "frontend"),
-		lvr:   lvr,
-		tofu:  tofu,
+		model:     pb.NewModelClient(conn),
+		l:         l.New("service", "frontend"),
+		lvr:       lvr,
+		tofu:      tofu,
+		oidc:      provider,
+		oauth2:    oauth2Config,
+		secretKey: secretKey,
 	}
 
 	grpcWebServer := grpc.NewServer()
@@ -174,6 +163,9 @@ func main() {
 
 	mux.HandleFunc("/", fe.viewIssues)
 	mux.HandleFunc("/issues", fe.viewIssues)
+	mux.HandleFunc("/login", fe.viewLogin)
+	mux.HandleFunc("/login/oauth-redirect", fe.viewLoginOAuthRedirect)
+	mux.HandleFunc("/logout", fe.viewLogout)
 
 	mux.HandleFunc("/js.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/javascript")
